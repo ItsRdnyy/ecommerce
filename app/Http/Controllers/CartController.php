@@ -51,12 +51,12 @@ class CartController extends Controller
             }
 
             if ($variant->stock < $quantity) {
-                return $this->jsonOrRedirect($request, 'Insufficient stock for selected size. Available: ' . $variant->stock, false, 400);
+                return $this->jsonOrRedirect($request, 'Oops! Only ' . $variant->stock . ' left in this size.', false, 400);
             }
         } else {
             // Check if product is in stock (for non-size products)
             if ($product->stock < $quantity) {
-                return $this->jsonOrRedirect($request, 'Insufficient stock. Available: ' . $product->stock, false, 400);
+                return $this->jsonOrRedirect($request, 'Oops! Only ' . $product->stock . ' left in stock.', false, 400);
             }
         }
 
@@ -82,11 +82,11 @@ class CartController extends Controller
                 $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
 
                 if ($variant && $variant->stock < $newQuantity) {
-                    return $this->jsonOrRedirect($request, 'Insufficient stock for selected size. Available: ' . $variant->stock, false, 400);
+                    return $this->jsonOrRedirect($request, 'Oops! Only ' . $variant->stock . ' left in this size.', false, 400);
                 }
             } else {
                 if ($product->stock < $newQuantity) {
-                    return $this->jsonOrRedirect($request, 'Insufficient stock. Available: ' . $product->stock, false, 400);
+                    return $this->jsonOrRedirect($request, 'Oops! Only ' . $product->stock . ' left in stock.', false, 400);
                 }
             }
 
@@ -130,11 +130,11 @@ class CartController extends Controller
             }
 
             if ($variant->stock < $quantity) {
-                return $this->jsonOrRedirect($request, 'Insufficient stock for selected size. Available: ' . $variant->stock, false, 400);
+                return $this->jsonOrRedirect($request, 'Oops! Only ' . $variant->stock . ' left in this size.', false, 400);
             }
         } else {
             if ($product->stock < $quantity) {
-                return $this->jsonOrRedirect($request, 'Insufficient stock. Available: ' . $product->stock, false, 400);
+                return $this->jsonOrRedirect($request, 'Oops! Only ' . $product->stock . ' left in stock.', false, 400);
             }
         }
 
@@ -148,8 +148,15 @@ class CartController extends Controller
                 'success' => true,
                 'message' => 'Cart updated successfully',
                 'cart_count' => $item->cart->items->sum('quantity'),
-                'cart_total' => number_format($item->cart->total, 2),
-                'item_total' => number_format($item->quantity * $item->unit_price, 2)
+                'item_total' => number_format($item->quantity * $item->unit_price, 2),
+                'item_unit_price' => number_format($item->unit_price, 2),
+                'summary' => [
+                    'subtotal' => number_format($item->cart->total + $item->cart->discount_total, 2),
+                    'discount_total' => number_format($item->cart->discount_total, 2),
+                    'shipping_total' => number_format($item->cart->shipping_total, 2),
+                    'total' => number_format($item->cart->total + $item->cart->shipping_total, 2),
+                    'has_discounts' => $item->cart->discount_total > 0
+                ]
             ]);
         }
 
@@ -206,7 +213,13 @@ class CartController extends Controller
                 'success' => true,
                 'message' => 'Item removed from cart',
                 'cart_count' => $cart->items->sum('quantity'),
-                'cart_total' => number_format($cart->total, 2)
+                'summary' => [
+                    'subtotal' => number_format($cart->total + $cart->discount_total, 2),
+                    'discount_total' => number_format($cart->discount_total, 2),
+                    'shipping_total' => number_format($cart->shipping_total, 2),
+                    'total' => number_format($cart->total + $cart->shipping_total, 2),
+                    'has_discounts' => $cart->discount_total > 0
+                ]
             ]);
         }
 

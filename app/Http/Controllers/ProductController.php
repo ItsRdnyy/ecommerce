@@ -81,4 +81,37 @@ class ProductController extends Controller
         $product->load('category');
         return view('product-detail', compact('product'));
     }
+
+    public function calculatePrice(Request $request, Product $product)
+    {
+        $quantity = (int) $request->input('quantity', 1);
+        $size = $request->input('size');
+
+        $type = 'retail';
+        $user = auth()->user();
+        if ($user && $user->isBusiness() && $product->is_wholesale_enabled && $product->wholesale_price > 0) {
+            if (\App\Services\DiscountEngine::validateMoq($product, $quantity, 'wholesale')) {
+                $type = 'wholesale';
+            }
+        }
+
+        $calc = \App\Services\DiscountEngine::calculate($product, $quantity, $type, $size);
+
+        return response()->json([
+            'success' => true,
+            'base_price' => $calc['base_price'],
+            'quantity' => $calc['quantity'],
+            'discount_rate' => $calc['discount_rate'],
+            'discount_percent' => $calc['discount_rate'] * 100,
+            'discount_amount' => $calc['discount_amount'],
+            'unit_price' => $calc['unit_price'],
+            'total' => $calc['total'],
+            'type' => $type,
+            'formatted_base_price' => number_format($calc['base_price'], 2),
+            'formatted_discount_amount' => number_format($calc['discount_amount'], 2),
+            'formatted_unit_price' => number_format($calc['unit_price'], 2),
+            'formatted_total' => number_format($calc['total'], 2),
+        ]);
+    }
 }
+

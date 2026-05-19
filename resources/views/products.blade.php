@@ -235,6 +235,7 @@
                                                        value="1"
                                                        min="1"
                                                        max="{{ $totalStock }}"
+                                                       onchange="window.ProductsPage.onQuantityChange({{ $product->id }})"
                                                        class="w-16 px-3 py-2 text-center border border-[#e8e5e0] bg-[#f5f3ef] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900">
                                                 <button onclick="window.ProductsPage.incrementQuantity({{ $product->id }}, {{ $totalStock }})"
                                                         class="w-8 h-8 flex items-center justify-center border border-[#e8e5e0] bg-[#f5f3ef] text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">

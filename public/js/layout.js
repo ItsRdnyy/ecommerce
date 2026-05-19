@@ -164,25 +164,32 @@
      */
     function showNotification(message, type = 'success') {
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-x-full ${
-            type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-        }`;
-        notification.textContent = message;
+        const isSuccess = type === 'success';
+        const bgColor = isSuccess ? 'bg-gray-900' : 'bg-red-50 border border-red-200';
+        const textColor = isSuccess ? 'text-white' : 'text-red-800';
+        const icon = isSuccess 
+            ? `<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+            : `<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
 
+        notification.className = `fixed top-5 right-5 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl z-50 transform transition-all duration-300 translate-y-[-100%] opacity-0 ${bgColor} ${textColor}`;
+        
+        notification.innerHTML = `
+            ${icon}
+            <span class="text-[14px] font-medium tracking-wide">${message}</span>
+        `;
+        
         document.body.appendChild(notification);
 
         // Animate in
-        setTimeout(() => {
-            notification.classList.remove('translate-x-full');
-        }, 10);
+        requestAnimationFrame(() => {
+            notification.classList.remove('translate-y-[-100%]', 'opacity-0');
+        });
 
-        // Remove after 3 seconds
         setTimeout(() => {
-            notification.classList.add('translate-x-full');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }, 3000);
+            // Animate out
+            notification.classList.add('translate-y-[-100%]', 'opacity-0');
+            setTimeout(() => notification.remove(), 300);
+        }, 3500);
     }
 
     // Initialize on DOM ready

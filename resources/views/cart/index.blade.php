@@ -67,8 +67,8 @@
 
                             <!-- Price -->
                             <div class="flex items-center justify-between">
-                                <p class="text-[18px] font-semibold text-gray-900 item-total">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</p>
-                                <p class="text-[12px] text-gray-500">₱{{ number_format($item->unit_price, 2) }} each</p>
+                                <p class="text-[18px] font-semibold text-gray-900 item-total" data-item-id="{{ $item->id }}">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</p>
+                                <p class="text-[12px] text-gray-500"><span class="item-unit-price" data-item-id="{{ $item->id }}">₱{{ number_format($item->unit_price, 2) }}</span> each</p>
                             </div>
                         </div>
                     </div>
@@ -84,22 +84,20 @@
                     <div class="space-y-4 mb-6">
                         <div class="flex justify-between text-[14px]">
                             <span class="text-gray-600">Subtotal</span>
-                            <span class="font-medium text-gray-900">₱{{ number_format($cart->total + $cart->discount_total, 2) }}</span>
+                            <span class="font-medium text-gray-900" id="summary-subtotal">₱{{ number_format($cart->total + $cart->discount_total, 2) }}</span>
                         </div>
-                        @if($cart->discount_total > 0)
-                        <div class="flex justify-between text-[14px]">
+                        <div class="flex justify-between text-[14px] {{ $cart->discount_total > 0 ? '' : 'hidden' }}" id="summary-discount-row">
                             <span class="text-green-700">Discounts</span>
-                            <span class="font-medium text-green-700">-₱{{ number_format($cart->discount_total, 2) }}</span>
+                            <span class="font-medium text-green-700" id="summary-discount">-₱{{ number_format($cart->discount_total, 2) }}</span>
                         </div>
-                        @endif
                         <div class="flex justify-between text-[14px]">
                             <span class="text-gray-600">Shipping</span>
-                            <span class="font-medium text-gray-900">₱{{ number_format($cart->shipping_total, 2) }}</span>
+                            <span class="font-medium text-gray-900" id="summary-shipping">₱{{ number_format($cart->shipping_total, 2) }}</span>
                         </div>
                         <div class="border-t border-[#e8e5e0] pt-4">
                             <div class="flex justify-between text-[20px] font-semibold text-gray-900">
                                 <span>Total</span>
-                                <span>₱{{ number_format($cart->total + $cart->shipping_total, 2) }}</span>
+                                <span id="summary-total">₱{{ number_format($cart->total + $cart->shipping_total, 2) }}</span>
                             </div>
                         </div>
                     </div>
@@ -143,65 +141,122 @@
     });
 
     function setupCartPage() {
-        // Quantity decrease buttons
         document.querySelectorAll('.qty-decrease').forEach(button => {
             button.addEventListener('click', function() {
                 const itemId = this.dataset.itemId;
                 const input = document.querySelector(`.quantity-input[data-item-id="${itemId}"]`);
                 const currentValue = parseInt(input.value);
-                
-                if (currentValue > 1) {
-                    updateQuantity(itemId, currentValue - 1);
-                }
+                if (currentValue > 1) updateQuantity(itemId, currentValue - 1);
             });
         });
 
-        // Quantity increase buttons
         document.querySelectorAll('.qty-increase').forEach(button => {
             button.addEventListener('click', function() {
                 const itemId = this.dataset.itemId;
                 const input = document.querySelector(`.quantity-input[data-item-id="${itemId}"]`);
                 const currentValue = parseInt(input.value);
-                
-                if (currentValue < 99) {
-                    updateQuantity(itemId, currentValue + 1);
-                }
+                if (currentValue < 99) updateQuantity(itemId, currentValue + 1);
             });
         });
 
-        // Quantity input change
         document.querySelectorAll('.quantity-input').forEach(input => {
             input.addEventListener('change', function() {
                 const itemId = this.dataset.itemId;
                 let value = parseInt(this.value);
-                
                 if (value < 1) value = 1;
                 if (value > 99) value = 99;
-                
                 this.value = value;
                 updateQuantity(itemId, value);
             });
         });
 
-        // Remove item buttons
         document.querySelectorAll('.remove-item').forEach(button => {
             button.addEventListener('click', function() {
                 const itemId = this.dataset.itemId;
-                if (confirm('Are you sure you want to remove this item?')) {
-                    removeItem(itemId);
-                }
+                showConfirmModal(
+                    'Remove Item', 
+                    'Are you sure you want to remove this item from your cart?', 
+                    () => removeItem(itemId)
+                );
             });
         });
 
-        // Clear cart button
         const clearCartBtn = document.getElementById('clear-cart');
         if (clearCartBtn) {
             clearCartBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to clear your cart?')) {
-                    clearCart();
-                }
+                showConfirmModal(
+                    'Clear Cart', 
+                    'Are you sure you want to remove all items from your shopping cart? This action cannot be undone.', 
+                    () => clearCart()
+                );
             });
         }
+    }
+
+    function showConfirmModal(title, message, onConfirm) {
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm opacity-0 transition-opacity duration-300';
+        
+        const modal = document.createElement('div');
+        modal.className = 'bg-white rounded-2xl shadow-2xl w-[90%] max-w-[400px] overflow-hidden transform scale-95 opacity-0 transition-all duration-300';
+        
+        modal.innerHTML = `
+            <div class="p-6">
+                <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mb-5">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h3 class="text-[18px] font-semibold text-gray-900 mb-2">${title}</h3>
+                <p class="text-[14px] text-gray-600">${message}</p>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
+                <button id="modal-cancel" class="px-5 py-2.5 text-[13px] font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+                <button id="modal-confirm" class="px-5 py-2.5 text-[13px] font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">Confirm</button>
+            </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            overlay.classList.remove('opacity-0');
+            modal.classList.remove('scale-95', 'opacity-0');
+        });
+        
+        function closeModal() {
+            overlay.classList.add('opacity-0');
+            modal.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => overlay.remove(), 300);
+        }
+        
+        modal.querySelector('#modal-cancel').addEventListener('click', closeModal);
+        modal.querySelector('#modal-confirm').addEventListener('click', () => {
+            onConfirm();
+            closeModal();
+        });
+    }
+
+    function updateSummary(summary) {
+        if (!summary) return;
+        const subtotalEl = document.getElementById('summary-subtotal');
+        if (subtotalEl) subtotalEl.textContent = '₱' + summary.subtotal;
+        
+        const discountRow = document.getElementById('summary-discount-row');
+        const discountEl = document.getElementById('summary-discount');
+        if (discountRow && discountEl) {
+            if (summary.has_discounts) {
+                discountEl.textContent = '-₱' + summary.discount_total;
+                discountRow.classList.remove('hidden');
+            } else {
+                discountRow.classList.add('hidden');
+            }
+        }
+        
+        const shippingEl = document.getElementById('summary-shipping');
+        if (shippingEl) shippingEl.textContent = '₱' + summary.shipping_total;
+        
+        const totalEl = document.getElementById('summary-total');
+        if (totalEl) totalEl.textContent = '₱' + summary.total;
     }
 
     async function updateQuantity(itemId, quantity) {
@@ -216,30 +271,22 @@
                 },
                 body: JSON.stringify({ quantity: quantity })
             });
-            
             const data = await response.json();
-            
             if (data.success) {
-                // Update cart count
                 updateCartCountDisplay(data.cart_count);
-                
-                // Update item total
                 const itemTotal = document.querySelector(`.cart-item[data-item-id="${itemId}"] .item-total`);
-                if (itemTotal) {
-                    itemTotal.textContent = '₱' + data.item_total;
-                }
-                
-                // Update cart total
-                location.reload(); // Reload to update totals
+                if (itemTotal) itemTotal.textContent = '₱' + data.item_total;
+                const itemUnit = document.querySelector(`.item-unit-price[data-item-id="${itemId}"]`);
+                if (itemUnit && data.item_unit_price) itemUnit.textContent = '₱' + data.item_unit_price;
+                updateSummary(data.summary);
             } else {
-                showNotification(data.message, 'error');
+                window.Layout.showNotification(data.message, 'error');
             }
         } catch (error) {
             console.error('Error updating quantity:', error);
-            showNotification('Error updating quantity', 'error');
         }
     }
-
+ 
     async function removeItem(itemId) {
         try {
             const response = await fetch(`/cart/items/${itemId}`, {
@@ -250,31 +297,16 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 }
             });
-            
             const data = await response.json();
-            
             if (data.success) {
-                // Update cart count
                 updateCartCountDisplay(data.cart_count);
-                
-                // Remove item from DOM
                 const item = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
-                if (item) {
-                    item.remove();
-                }
-                
-                // Reload if cart is empty
-                if (data.cart_count === 0) {
-                    location.reload();
-                } else {
-                    location.reload(); // Reload to update totals
-                }
-                
-                showNotification(data.message, 'success');
+                if (item) item.remove();
+                if (data.cart_count === 0) location.reload();
+                else updateSummary(data.summary);
             }
         } catch (error) {
             console.error('Error removing item:', error);
-            showNotification('Error removing item', 'error');
         }
     }
 
@@ -294,11 +326,11 @@
             if (data.success) {
                 updateCartCountDisplay(0);
                 location.reload();
-                showNotification(data.message, 'success');
+                window.Layout.showNotification(data.message, 'success');
             }
         } catch (error) {
             console.error('Error clearing cart:', error);
-            showNotification('Error clearing cart', 'error');
+            window.Layout.showNotification('Error clearing cart', 'error');
         }
     }
 

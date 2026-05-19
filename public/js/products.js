@@ -3,7 +3,7 @@
  * Handles search, filtering, cart operations, and product interactions
  */
 
-(function() {
+(function () {
     'use strict';
 
     let searchTimeout;
@@ -58,7 +58,7 @@
 
         // Add smooth transition styles to prevent layout shifts
         productsGrid.style.transition = 'opacity 0.3s ease-in-out';
-        
+
         // Add CSS for smooth animations if not already present
         if (!document.getElementById('products-page-styles')) {
             const style = document.createElement('style');
@@ -102,7 +102,7 @@
         // Apply initial filter if URL has parameters
         const urlParams = new URLSearchParams(window.location.search);
         console.log('URL params:', Object.fromEntries(urlParams));
-        
+
         if (urlParams.has('search') || urlParams.has('category') || urlParams.has('gender')) {
             searchInput.value = urlParams.get('search') || '';
             categoryFilter.value = urlParams.get('category') || '';
@@ -185,7 +185,7 @@
             // Group products by business - maintain order
             const productsByShop = {};
             const shopOrder = [];
-            
+
             data.products.forEach(product => {
                 if (!productsByShop[product.business_id]) {
                     productsByShop[product.business_id] = {
@@ -199,12 +199,12 @@
 
             // Render products maintaining section organization
             renderProducts(productsByShop, shopOrder);
-            
+
             // Smooth transition back to full opacity
             setTimeout(() => {
                 productsGrid.style.opacity = '1';
             }, 50);
-            
+
             isLoading = false;
         } catch (error) {
             console.error('Error filtering products:', error);
@@ -293,15 +293,15 @@
 
         // Build size chips if product has sizes
         const catName = (product.category_name || '').toLowerCase();
-        const isShoe = ['shoe','footwear','sneaker','boot'].some(k => catName.includes(k));
-        const isApparel = ['clothing','shirt','pants','dress','apparel'].some(k => catName.includes(k));
+        const isShoe = ['shoe', 'footwear', 'sneaker', 'boot'].some(k => catName.includes(k));
+        const isApparel = ['clothing', 'shirt', 'pants', 'dress', 'apparel'].some(k => catName.includes(k));
         let sizesHtml = '';
         if (isShoe || isApparel) {
             let sizeList = [];
             let sizeStocks = {};
             let sizePrices = {};
             if (isShoe) {
-                sizeList = [38,39,40,41,42,43,44,45,46,47,48];
+                sizeList = [38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48];
                 sizeList.forEach(s => {
                     const variant = (product.variants || []).find(v => String(v.size) === String(s));
                     sizeStocks[s] = variant ? variant.stock : 0;
@@ -411,6 +411,7 @@
                                 value="1"
                                 min="1"
                                 max="${product.stock}"
+                                onchange="window.ProductsPage.onQuantityChange(${product.id})"
                                 class="w-16 px-3 py-2 text-center border border-[#e8e5e0] bg-[#f5f3ef] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900">
                             <button onclick="window.ProductsPage.incrementQuantity(${product.id}, ${product.stock})"
                                 class="w-8 h-8 flex items-center justify-center border border-[#e8e5e0] bg-[#f5f3ef] text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
@@ -474,6 +475,7 @@
         const maxStock = input.hasAttribute('max') ? parseInt(input.max) : defaultStock;
         if (parseInt(input.value) < maxStock) {
             input.value++;
+            recalculateProductPrice(id);
         }
     }
 
@@ -484,6 +486,50 @@
         const input = document.getElementById(`quantity-${id}`);
         if (parseInt(input.value) > 1) {
             input.value--;
+            recalculateProductPrice(id);
+        }
+    }
+
+    /**
+     * Handle manual quantity input field change
+     */
+    function onQuantityChange(id) {
+        const input = document.getElementById(`quantity-${id}`);
+        if (!input) return;
+        let value = parseInt(input.value) || 1;
+        const max = input.hasAttribute('max') ? parseInt(input.max) : 999;
+        if (value < 1) value = 1;
+        if (value > max) value = max;
+        input.value = value;
+        recalculateProductPrice(id);
+    }
+
+    /**
+     * Recalculate price dynamically for list cards
+     */
+    async function recalculateProductPrice(productId) {
+        const qtyInput = document.getElementById(`quantity-${productId}`);
+        if (!qtyInput) return;
+        const quantity = parseInt(qtyInput.value) || 1;
+        const sizeInput = document.getElementById(`selected-size-${productId}`);
+        const size = sizeInput ? sizeInput.value : '';
+
+        try {
+            const response = await fetch(`/products/${productId}/calculate-price?quantity=${quantity}&size=${size}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const priceDisplay = document.getElementById(`price-display-${productId}`);
+                if (priceDisplay) {
+                    if (data.discount_rate > 0) {
+                        priceDisplay.innerHTML = `<span class="text-[13px] text-gray-500 line-through mr-1.5">₱${data.formatted_base_price}</span> <span class="text-green-600 font-semibold">₱${data.formatted_unit_price}</span>`;
+                    } else {
+                        priceDisplay.textContent = '₱' + data.formatted_base_price;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error calculating product price:', error);
         }
     }
 
@@ -508,16 +554,7 @@
         // Hide error if shown
         const err = document.getElementById(`size-error-${productId}`);
         if (err) err.classList.add('hidden');
-        
-        // Update price display
-        const priceDisplay = document.getElementById(`price-display-${productId}`);
-        if (priceDisplay) {
-            const variantPrice = btn.dataset.price;
-            const basePrice = parseFloat(priceDisplay.dataset.basePrice) || 0;
-            const activePrice = (variantPrice && variantPrice !== 'null' && variantPrice !== '') ? parseFloat(variantPrice) : basePrice;
-            priceDisplay.textContent = '₱' + activePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-        
+
         // Update stock display and quantity max
         const stock = parseInt(btn.dataset.stock) || 0;
         const stockDisplay = document.getElementById(`stock-display-${productId}`);
@@ -533,6 +570,8 @@
                 quantityInput.value = stock > 0 ? stock : 1;
             }
         }
+
+        recalculateProductPrice(productId);
     }
 
     /**
@@ -662,15 +701,32 @@
      */
     function showNotification(message, type) {
         const notification = document.createElement('div');
-        notification.className =
-            `fixed top-5 right-5 px-5 py-3 rounded-lg shadow-xl z-50 text-white text-[14px]
-            ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-        notification.textContent = message;
+        const isSuccess = type === 'success';
+        const bgColor = isSuccess ? 'bg-gray-900' : 'bg-red-50 border border-red-200';
+        const textColor = isSuccess ? 'text-white' : 'text-red-800';
+        const icon = isSuccess
+            ? `<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+            : `<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+
+        notification.className = `fixed top-5 right-5 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl z-50 transform transition-all duration-300 translate-y-[-100%] opacity-0 ${bgColor} ${textColor}`;
+
+        notification.innerHTML = `
+            ${icon}
+            <span class="text-[14px] font-medium tracking-wide">${message}</span>
+        `;
+
         document.body.appendChild(notification);
 
+        // Animate in
+        requestAnimationFrame(() => {
+            notification.classList.remove('translate-y-[-100%]', 'opacity-0');
+        });
+
         setTimeout(() => {
-            notification.remove();
-        }, 2500);
+            // Animate out
+            notification.classList.add('translate-y-[-100%]', 'opacity-0');
+            setTimeout(() => notification.remove(), 300);
+        }, 3500);
     }
 
     // Initialize on DOM ready
@@ -686,6 +742,8 @@
     window.ProductsPage = {
         incrementQuantity,
         decrementQuantity,
+        onQuantityChange,
+        recalculateProductPrice,
         addToCart,
         buyNow,
         selectSize

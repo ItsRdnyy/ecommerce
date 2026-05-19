@@ -93,8 +93,12 @@
                             <span class="text-[32px] font-light text-gray-900" id="product-price-display" data-base-price="{{ $product->retail_price }}">
                                 ₱{{ number_format($product->retail_price, 2) }}
                             </span>
+                            <div id="detail-discount-notice" class="text-[14px] text-green-700 font-semibold mt-1 hidden"></div>
+                            <div id="detail-total-display" class="text-[16px] text-gray-600 mt-1 hidden">
+                                Total: <span class="font-bold text-gray-900" id="detail-total-value">₱0.00</span>
+                            </div>
                             @if($product->is_wholesale_enabled && $product->wholesale_price > 0)
-                                <div class="mt-2">
+                                <div class="mt-2" id="detail-wholesale-container">
                                     <span class="text-[14px] text-gray-500 line-through">₱{{ number_format($product->wholesale_price, 2) }}</span>
                                     <span class="text-[12px] text-gray-600 ml-2">Wholesale from {{ $product->moq ?? 1 }} pcs</span>
                                 </div>
@@ -202,7 +206,7 @@
                                 <div class="flex items-center gap-4 mb-4">
                                     <label class="text-[14px] font-medium text-gray-900">Quantity:</label>
                                     <div class="flex items-center gap-2">
-                                        <button onclick="document.getElementById('quantity').value = Math.max(1, parseInt(document.getElementById('quantity').value) - 1)"
+                                        <button onclick="changeDetailQuantity(-1)"
                                                 class="w-10 h-10 flex items-center justify-center border border-[#e8e5e0] bg-[#f5f3ef] text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 12h-15" />
@@ -214,7 +218,7 @@
                                                min="1"
                                                max="{{ $totalStock }}"
                                                class="w-20 px-3 py-2 text-center border border-[#e8e5e0] bg-[#f5f3ef] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900">
-                                        <button onclick="document.getElementById('quantity').value = Math.min(document.getElementById('quantity').max, parseInt(document.getElementById('quantity').value) + 1)"
+                                        <button onclick="changeDetailQuantity(1)"
                                                 class="w-10 h-10 flex items-center justify-center border border-[#e8e5e0] bg-[#f5f3ef] text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.5v15m7.5-7.5h-15" />
@@ -302,15 +306,6 @@ function selectDetailSize(size, btn) {
     // Hide error
     const err = document.getElementById('detail-size-error');
     if (err) err.classList.add('hidden');
-
-    // Update price display
-    const priceDisplay = document.getElementById('product-price-display');
-    if (priceDisplay) {
-        const variantPrice = btn.dataset.price;
-        const basePrice = parseFloat(priceDisplay.dataset.basePrice) || 0;
-        const activePrice = (variantPrice && variantPrice !== 'null' && variantPrice !== '') ? parseFloat(variantPrice) : basePrice;
-        priceDisplay.textContent = '₱' + activePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
     
     // Update stock display and max quantity
     const stock = parseInt(btn.dataset.stock) || 0;
@@ -361,6 +356,72 @@ function selectDetailSize(size, btn) {
             addBtn.querySelector('.btn-text').textContent = 'Add to Cart';
         }
     }
+
+    recalculateDetailPrice();
+}
+
+function changeDetailQuantity(delta) {
+    const qtyInput = document.getElementById('quantity');
+    if (!qtyInput) return;
+    const current = parseInt(qtyInput.value) || 1;
+    const min = parseInt(qtyInput.min) || 1;
+    const max = parseInt(qtyInput.max) || 999;
+    let newValue = current + delta;
+    if (newValue < min) newValue = min;
+    if (newValue > max) newValue = max;
+    qtyInput.value = newValue;
+    recalculateDetailPrice();
+}
+
+async function recalculateDetailPrice() {
+    const qtyInput = document.getElementById('quantity');
+    if (!qtyInput) return;
+    const quantity = parseInt(qtyInput.value) || 1;
+    const size = document.getElementById('detail-selected-size') ? document.getElementById('detail-selected-size').value : '';
+    const productId = "{{ $product->id }}";
+
+    try {
+        const response = await fetch(`/products/${productId}/calculate-price?quantity=${quantity}&size=${size}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update unit price display
+            const priceDisplay = document.getElementById('product-price-display');
+            if (priceDisplay) {
+                if (data.discount_rate > 0) {
+                    priceDisplay.innerHTML = `<span class="text-[20px] text-gray-500 line-through mr-2">₱${data.formatted_base_price}</span> <span class="text-green-600 font-semibold">₱${data.formatted_unit_price}</span>`;
+                } else {
+                    priceDisplay.textContent = '₱' + data.formatted_base_price;
+                }
+            }
+
+            // Update discount notice
+            const discountNotice = document.getElementById('detail-discount-notice');
+            if (discountNotice) {
+                if (data.discount_rate > 0) {
+                    discountNotice.textContent = `${data.discount_percent}% off applied for ordering ${data.quantity} pcs`;
+                    discountNotice.classList.remove('hidden');
+                } else {
+                    discountNotice.classList.add('hidden');
+                    discountNotice.textContent = '';
+                }
+            }
+
+            // Update total display
+            const totalDisplay = document.getElementById('detail-total-display');
+            const totalValue = document.getElementById('detail-total-value');
+            if (totalDisplay && totalValue) {
+                if (data.quantity > 1) {
+                    totalValue.textContent = '₱' + data.formatted_total;
+                    totalDisplay.classList.remove('hidden');
+                } else {
+                    totalDisplay.classList.add('hidden');
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error calculating price:', error);
+    }
 }
 
 function openSizeChartModal() {
@@ -393,6 +454,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const firstBtn = document.querySelector('.detail-size-btn:not([disabled])');
     if (firstBtn) {
         firstBtn.click();
+    } else {
+        recalculateDetailPrice();
+    }
+
+    const qtyInput = document.getElementById('quantity');
+    if (qtyInput) {
+        qtyInput.addEventListener('change', recalculateDetailPrice);
+        qtyInput.addEventListener('input', recalculateDetailPrice);
     }
 });
 </script>
