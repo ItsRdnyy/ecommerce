@@ -23,8 +23,9 @@ class User extends Authenticatable
     const ROLE_BUYER = 'buyer';
 
     const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
+    const STATUS_ACTIVE = 'active';
     const STATUS_REJECTED = 'rejected';
+    const STATUS_SUSPENDED = 'suspended';
 
     protected $fillable = [
         'name',

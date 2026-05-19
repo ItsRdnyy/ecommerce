@@ -41,8 +41,8 @@ class LoginController extends Controller
         }
 
         if ($user && $validPassword) {
-            // Check if user is approved (admins are always approved)
-            if (!$user->isAdmin() && $user->status !== \App\Models\User::STATUS_APPROVED) {
+            // Check if user is active (admins are always active)
+            if (!$user->isAdmin() && $user->status !== \App\Models\User::STATUS_ACTIVE) {
                 return back()->withErrors([
                     'email' => 'Your account is ' . $user->status . '. Please wait for admin approval.',
                 ])->onlyInput('email', 'redirect');

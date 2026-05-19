@@ -163,8 +163,8 @@ class AdminController extends Controller
 
     public function approveUser(User $user)
     {
-        $user->update(['status' => User::STATUS_APPROVED]);
-        return back()->with('success', 'User account approved successfully.');
+        $user->update(['status' => User::STATUS_ACTIVE]);
+        return back()->with('success', 'User account activated successfully.');
     }
 
     public function rejectUser(User $user)
