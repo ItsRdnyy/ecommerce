@@ -107,11 +107,12 @@
                                     $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
                                     $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
                                     $showSizes = $isApparel || $isShoe;
-                                    $totalStock = $showSizes ? $product->variants->sum('stock') : $product->stock;
+                                    $variantsStock = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;
+                                    $totalStock = $showSizes && $product->variants->count() > 0 ? $variantsStock : $product->stock;
                                 @endphp
-                                <div class="bg-white border border-[#e8e5e0] group hover:shadow-xl transition-all duration-300">
+                                <div class="bg-white border border-[#e8e5e0] group hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                                     <!-- Product Image -->
-                                    <div class="aspect-[3/4] overflow-hidden bg-gray-100 relative">
+                                    <div class="aspect-[3/4] overflow-hidden bg-gray-100 relative flex-shrink-0">
                                         @if($product->image)
                                             <img src="{{ asset('storage/' . $product->image) }}" 
                                                  alt="{{ $product->name }}" 
@@ -137,7 +138,7 @@
                                     </div>
 
                                     <!-- Product Details -->
-                                    <div class="p-5">
+                                    <div class="p-5 flex flex-col flex-grow">
                                         <!-- Category & Gender -->
                                         <div class="flex items-center gap-2 mb-3">
                                             <span class="text-[11px] px-2 py-1 bg-[#f5f3ef] text-gray-700 rounded-full">
@@ -224,7 +225,7 @@
                                         @endif
 
                                         <!-- Quantity Selector and Actions -->
-                                        <div class="space-y-3">
+                                        <div class="space-y-3 mt-auto">
                                             <!-- Quantity Selector -->
                                             <div class="flex items-center justify-center gap-2">
                                                 <button onclick="window.ProductsPage.decrementQuantity({{ $product->id }})"

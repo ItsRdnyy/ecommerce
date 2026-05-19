@@ -109,8 +109,8 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                 @forelse($featuredProducts as $product)
-                    <div class="product-card group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300">
-                        <div class="relative overflow-hidden">
+                    <div class="product-card group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300 flex flex-col h-full">
+                        <div class="relative overflow-hidden flex-shrink-0">
                             @if($product->image)
                                 <img src="{{ asset('storage/' . $product->image) }}" 
                                      alt="{{ $product->name }}" 
@@ -127,7 +127,8 @@
                                 $isApparelLP = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
                                 $isShoeLP = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
                                 $showSizesLP = $isApparelLP || $isShoeLP;
-                                $totalStock = $showSizesLP ? $product->variants->sum('stock') : $product->stock;
+                                $variantsStockLP = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;
+                                $totalStock = $showSizesLP && $product->variants->count() > 0 ? $variantsStockLP : $product->stock;
                             @endphp
                             <div class="absolute top-4 right-4">
                                 <span class="inline-flex px-3 py-1 text-[10px] font-semibold tracking-wider uppercase rounded-full {{ $totalStock == 0 ? 'bg-red-600 text-white' : 'bg-gray-900 text-white' }}">
@@ -135,7 +136,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="p-6">
+                        <div class="p-6 flex flex-col flex-grow">
                             <!-- Category & Gender -->
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="text-[12px] text-gray-600">{{ $product->category->name ?? 'Uncategorized' }}</span>
@@ -192,7 +193,7 @@
                             </div>
                             @endif
 
-                            <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center justify-between mb-4 mt-auto">
                                 <div class="flex items-center gap-2">
                                     <span id="price-display-{{ $product->id }}" data-base-price="{{ $product->retail_price }}" class="text-[20px] font-bold text-gray-900">₱{{ number_format($product->retail_price, 2) }}</span>
                                     @if($product->discountTiers && $product->discountTiers->count() > 0)

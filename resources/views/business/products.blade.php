@@ -128,9 +128,9 @@
             <div class="w-full max-w-[1200px] mx-auto overflow-x-hidden">
                 <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             @forelse ($products as $product)
-                <div class="bg-white border border-[#e8e5e0] rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="bg-white border border-[#e8e5e0] rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
                     <!-- Product Image -->
-                    <div class="aspect-square bg-gray-100 relative">
+                    <div class="aspect-square bg-gray-100 relative flex-shrink-0">
                         @if($product->image)
                             <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
                         @else
@@ -155,7 +155,7 @@
                     </div>
                     
                     <!-- Product Info -->
-                    <div class="p-4">
+                    <div class="p-4 flex flex-col flex-grow">
                         <h3 class="font-semibold text-[15px] text-gray-900 mb-2 line-clamp-2">{{ $product->name }}</h3>
                         
                         <!-- Category & Gender -->
@@ -239,7 +239,7 @@
                         @endif
                         
                         <!-- Actions -->
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 mt-auto">
                             <button onclick="openEditModal({{ $product->id }})" class="flex-1 bg-blue-600 text-white text-[11px] font-semibold tracking-[0.1em] uppercase py-2 px-3 rounded hover:bg-blue-700 transition-colors">
                                 Update
                             </button>
