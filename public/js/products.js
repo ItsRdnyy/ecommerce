@@ -299,11 +299,13 @@
         if (isShoe || isApparel) {
             let sizeList = [];
             let sizeStocks = {};
+            let sizePrices = {};
             if (isShoe) {
                 sizeList = [38,39,40,41,42,43,44,45,46,47,48];
                 sizeList.forEach(s => {
                     const variant = (product.variants || []).find(v => String(v.size) === String(s));
                     sizeStocks[s] = variant ? variant.stock : 0;
+                    sizePrices[s] = variant ? variant.price : null;
                 });
             } else if (isApparel && product.variants) {
                 const sizes = product.variants.map(v => v.size).filter(Boolean);
@@ -311,16 +313,19 @@
                 sizeList.forEach(s => {
                     const variant = product.variants.find(v => String(v.size) === String(s));
                     sizeStocks[s] = variant ? variant.stock : 0;
+                    sizePrices[s] = variant ? variant.price : null;
                 });
             }
 
             if (sizeList.length > 0) {
                 const chips = sizeList.map(s => {
                     const stock = sizeStocks[s] || 0;
+                    const price = sizePrices[s];
                     const isOutOfStock = stock <= 0;
                     return `<button type="button"
                         onclick="window.ProductsPage.selectSize(${product.id}, '${s}', this)"
                         data-stock="${stock}"
+                        data-price="${price !== null && price !== undefined ? price : ''}"
                         ${isOutOfStock ? 'disabled' : ''}
                         class="size-btn px-3 py-1.5 text-[12px] font-medium border rounded transition-colors ${isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900'}">
                         ${s}
@@ -384,7 +389,7 @@
                         ${product.description || ''}
                     </p>
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-[18px] font-light text-gray-900">
+                        <span id="price-display-${product.id}" data-base-price="${product.retail_price}" class="text-[18px] font-light text-gray-900">
                             ₱${parseFloat(product.retail_price).toFixed(2)}
                         </span>
                         <span id="stock-display-${product.id}" class="text-[12px] ${product.stock > 0 ? 'text-green-700' : 'text-red-600'}">
@@ -503,6 +508,15 @@
         // Hide error if shown
         const err = document.getElementById(`size-error-${productId}`);
         if (err) err.classList.add('hidden');
+        
+        // Update price display
+        const priceDisplay = document.getElementById(`price-display-${productId}`);
+        if (priceDisplay) {
+            const variantPrice = btn.dataset.price;
+            const basePrice = parseFloat(priceDisplay.dataset.basePrice) || 0;
+            const activePrice = (variantPrice && variantPrice !== 'null' && variantPrice !== '') ? parseFloat(variantPrice) : basePrice;
+            priceDisplay.textContent = '₱' + activePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
         
         // Update stock display and quantity max
         const stock = parseInt(btn.dataset.stock) || 0;

@@ -174,14 +174,16 @@
                                     @php
                                         $stock = $lpSizeStocks[$size] ?? 0;
                                         $isOutOfStock = $stock <= 0;
+                                        $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                        $price = $variant ? $variant->price : null;
                                     @endphp
                                     <button type="button"
                                             onclick="LandingPage.selectSize({{ $product->id }}, '{{ $size }}', this)"
                                             data-stock="{{ $stock }}"
+                                            data-price="{{ $price }}"
                                             {{ $isOutOfStock ? 'disabled' : '' }}
                                             class="size-btn inline-flex items-center px-2 py-1 text-[11px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-200 text-gray-600 bg-gray-50 hover:border-gray-900' }}">
                                         {{ $size }}
-                                        
                                     </button>
                                     @endforeach
                                 </div>
@@ -192,7 +194,7 @@
 
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[20px] font-bold text-gray-900">₱{{ number_format($product->retail_price, 2) }}</span>
+                                    <span id="price-display-{{ $product->id }}" data-base-price="{{ $product->retail_price }}" class="text-[20px] font-bold text-gray-900">₱{{ number_format($product->retail_price, 2) }}</span>
                                     @if($product->wholesale_price && $product->wholesale_price < $product->retail_price)
                                         <span class="text-[14px] text-gray-500 line-through">₱{{ number_format($product->wholesale_price, 2) }}</span>
                                     @endif

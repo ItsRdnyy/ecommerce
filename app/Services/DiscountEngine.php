@@ -8,11 +8,20 @@ use App\Models\User;
 
 class DiscountEngine
 {
-    public static function calculate(Product $product, int $quantity, string $type = 'retail'): array
+    public static function calculate(Product $product, int $quantity, string $type = 'retail', ?string $size = null): array
     {
-        $basePrice = $type === 'wholesale' && $product->wholesale_price > 0
-            ? (float) $product->wholesale_price
-            : (float) $product->retail_price;
+        $basePrice = (float) $product->retail_price;
+
+        if ($size) {
+            $variant = $product->variants()->where('attributes->size', $size)->first();
+            if ($variant && $variant->price !== null) {
+                $basePrice = (float) $variant->price;
+            }
+        }
+
+        if ($type === 'wholesale' && $product->wholesale_price > 0) {
+            $basePrice = (float) $product->wholesale_price;
+        }
 
         $tier = self::findTier($product, $quantity);
         $discountRate = $tier ? ($tier->discount_percent / 100) : 0;
@@ -76,8 +85,9 @@ class DiscountEngine
             $product = $item['product'] ?? Product::find($item['product_id']);
             $quantity = $item['quantity'];
             $type = $item['type'] ?? 'retail';
+            $size = $item['size'] ?? null;
 
-            $calc = self::calculate($product, $quantity, $type);
+            $calc = self::calculate($product, $quantity, $type, $size);
             $item['unit_price'] = $calc['unit_price'];
             $item['discount_amount'] = $calc['discount_amount'];
             $item['line_total'] = $calc['total'];

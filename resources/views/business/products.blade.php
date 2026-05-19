@@ -88,7 +88,7 @@
                 <input type="text" id="create_sizes" name="sizes" placeholder="e.g. S, M, L, XL" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                 <p class="text-[10px] text-gray-500 mt-1">This will automatically create variants for each size.</p>
                 <div id="create_sizes_stock_container" class="mt-3 hidden">
-                    <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock per Size</label>
+                    <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock and Price per Size</label>
                     <div id="create_sizes_stock_inputs" class="space-y-2"></div>
                 </div>
             </div>
@@ -207,8 +207,15 @@
                             <p class="text-[11px] text-gray-500 mb-1">Available Sizes</p>
                             <div class="flex flex-wrap gap-1">
                                 @foreach($sizes as $size)
+                                @php
+                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                    $variantPrice = $variant ? $variant->price : null;
+                                @endphp
                                 <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium border border-gray-200 rounded text-gray-600 bg-gray-50">
                                     {{ $size }}
+                                    @if($variantPrice)
+                                        <span class="ml-1 text-green-600 font-semibold">(₱{{ number_format($variantPrice, 2) }})</span>
+                                    @endif
                                 </span>
                                 @endforeach
                             </div>
@@ -324,7 +331,7 @@
                         <input type="text" id="edit_sizes" name="sizes" placeholder="e.g. S, M, L, XL" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                         <p class="text-[10px] text-gray-500 mt-1">This will automatically create variants for each size.</p>
                         <div id="edit_sizes_stock_container" class="mt-3 hidden">
-                            <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock per Size</label>
+                            <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock and Price per Size</label>
                             <div id="edit_sizes_stock_inputs" class="space-y-2"></div>
                         </div>
                     </div>

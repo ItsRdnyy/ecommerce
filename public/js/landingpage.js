@@ -27,6 +27,15 @@
         // Hide error if shown
         const err = document.getElementById(`size-error-${productId}`);
         if (err) err.classList.add('hidden');
+
+        // Update price display
+        const priceDisplay = document.getElementById(`price-display-${productId}`);
+        if (priceDisplay) {
+            const variantPrice = btn.dataset.price;
+            const basePrice = parseFloat(priceDisplay.dataset.basePrice) || 0;
+            const activePrice = (variantPrice && variantPrice !== 'null' && variantPrice !== '') ? parseFloat(variantPrice) : basePrice;
+            priceDisplay.textContent = '₱' + activePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
     }
 
     /**

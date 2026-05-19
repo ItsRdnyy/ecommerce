@@ -88,7 +88,7 @@ class CheckoutController extends Controller
 
                 foreach ($items as $item) {
                     $product = $item->product;
-                    $calc = DiscountEngine::calculate($product, $item->quantity, $item->type);
+                    $calc = DiscountEngine::calculate($product, $item->quantity, $item->type, $item->size);
                     $shipping = ShippingCalculator::calculateForProduct(
                         $product,
                         ($product->weight ?? 0.5) * $item->quantity
@@ -126,7 +126,7 @@ class CheckoutController extends Controller
                 foreach ($items as $item) {
                     $product = $item->product;
                     $size = $item->size;
-                    $calc = DiscountEngine::calculate($product, $item->quantity, $item->type);
+                    $calc = DiscountEngine::calculate($product, $item->quantity, $item->type, $size);
 
                     // Find variant if size is selected
                     $variant = null;

@@ -92,7 +92,7 @@ class CartController extends Controller
 
             $itemType = $this->resolveCartItemType($product, $newQuantity);
             $existing->update(array_merge(
-                $this->cartItemPayload($product, $newQuantity, $itemType),
+                $this->cartItemPayload($product, $newQuantity, $itemType, $size),
                 ['size' => $size]
             ));
         } else {
@@ -101,7 +101,7 @@ class CartController extends Controller
                 'cart_id' => $cart->id,
                 'product_id' => $product->id,
                 'size' => $size,
-            ], $this->cartItemPayload($product, $quantity, $itemType)));
+            ], $this->cartItemPayload($product, $quantity, $itemType, $size)));
         }
 
         $cart->recalculate();
@@ -139,7 +139,7 @@ class CartController extends Controller
         }
 
         $itemType = $this->resolveCartItemType($product, $quantity);
-        $item->update($this->cartItemPayload($product, $quantity, $itemType));
+        $item->update($this->cartItemPayload($product, $quantity, $itemType, $size));
 
         $item->cart->recalculate();
 
@@ -169,9 +169,9 @@ class CartController extends Controller
         return 'retail';
     }
 
-    private function cartItemPayload(Product $product, int $quantity, string $type): array
+    private function cartItemPayload(Product $product, int $quantity, string $type, ?string $size = null): array
     {
-        $calculation = DiscountEngine::calculate($product, $quantity, $type);
+        $calculation = DiscountEngine::calculate($product, $quantity, $type, $size);
 
         return [
             'quantity' => $quantity,

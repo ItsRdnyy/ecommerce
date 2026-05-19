@@ -50,10 +50,11 @@ function generateSizeStockInputs(sizesInputId, stockContainerId, stockInputsId) 
 
             sizes.forEach(size => {
                 const div = document.createElement('div');
-                div.className = 'flex items-center gap-2';
+                div.className = 'grid grid-cols-3 gap-2 items-center';
                 div.innerHTML = `
-                    <label class="text-[12px] text-gray-600 w-12">${size}:</label>
-                    <input type="number" name="sizes_stock[${size}]" min="0" value="0" class="flex-1 border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400" placeholder="Stock">
+                    <label class="text-[12px] text-gray-600 font-semibold">${size}:</label>
+                    <input type="number" name="sizes_stock[${size}]" min="0" value="0" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400" placeholder="Stock">
+                    <input type="number" name="sizes_price[${size}]" step="0.01" min="0" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400" placeholder="Price (Optional)">
                 `;
                 stockInputs.appendChild(div);
             });
@@ -124,7 +125,7 @@ function openEditModal(productId) {
                 // Trigger input event to generate stock inputs
                 editSizes.dispatchEvent(new Event('input'));
 
-                // Populate stock values from variants
+                // Populate stock and price values from variants
                 if (data.variants && data.variants.length > 0) {
                     setTimeout(() => {
                         data.variants.forEach(variant => {
@@ -133,6 +134,10 @@ function openEditModal(productId) {
                                 const stockInput = document.querySelector(`input[name="sizes_stock[${size}]"]`);
                                 if (stockInput) {
                                     stockInput.value = variant.stock || 0;
+                                }
+                                const priceInput = document.querySelector(`input[name="sizes_price[${size}]"]`);
+                                if (priceInput) {
+                                    priceInput.value = variant.price || '';
                                 }
                             }
                         });

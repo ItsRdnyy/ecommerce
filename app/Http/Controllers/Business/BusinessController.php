@@ -197,15 +197,18 @@ class BusinessController extends Controller
         if ($request->filled('sizes')) {
             $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));
             $sizesStock = $request->input('sizes_stock', []);
+            $sizesPrice = $request->input('sizes_price', []);
 
             foreach ($sizes as $size) {
                 if (!empty($size)) {
                     $stock = $sizesStock[$size] ?? 0;
+                    $price = isset($sizesPrice[$size]) && $sizesPrice[$size] !== '' ? floatval($sizesPrice[$size]) : null;
                     ProductVariant::create([
                         'product_id' => $product->id,
                         'name' => $product->name . ' - ' . $size,
                         'attributes' => ['size' => $size],
                         'stock' => $stock,
+                        'price' => $price,
                     ]);
                 }
             }
@@ -228,6 +231,7 @@ class BusinessController extends Controller
                 'id' => $variant->id,
                 'attributes' => $variant->attributes,
                 'stock' => $variant->stock,
+                'price' => $variant->price,
             ];
         });
 
@@ -253,6 +257,8 @@ class BusinessController extends Controller
             'sizes' => 'nullable|string|max:255',
             'sizes_stock' => 'nullable|array',
             'sizes_stock.*' => 'nullable|integer|min:0',
+            'sizes_price' => 'nullable|array',
+            'sizes_price.*' => 'nullable|numeric|min:0',
         ]);
 
         $updateData = [
@@ -276,14 +282,16 @@ class BusinessController extends Controller
         if ($request->filled('sizes')) {
             $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));
             $sizesStock = $request->input('sizes_stock', []);
+            $sizesPrice = $request->input('sizes_price', []);
             $existingVariants = $product->variants()->get();
             $existingSizes = $existingVariants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->values()->toArray();
 
-            // Update existing variants stock
+            // Update existing variants stock and price
             foreach ($existingVariants as $variant) {
                 $size = $variant->attributes['size'] ?? null;
                 if ($size && in_array($size, $sizes)) {
                     $variant->stock = $sizesStock[$size] ?? 0;
+                    $variant->price = isset($sizesPrice[$size]) && $sizesPrice[$size] !== '' ? floatval($sizesPrice[$size]) : null;
                     $variant->save();
                 }
             }
@@ -292,11 +300,13 @@ class BusinessController extends Controller
             $newSizes = array_diff($sizes, $existingSizes);
             foreach ($newSizes as $size) {
                 if (!empty($size)) {
+                    $price = isset($sizesPrice[$size]) && $sizesPrice[$size] !== '' ? floatval($sizesPrice[$size]) : null;
                     ProductVariant::create([
                         'product_id' => $product->id,
                         'name' => $product->name . ' - ' . $size,
                         'attributes' => ['size' => $size],
                         'stock' => $sizesStock[$size] ?? 0,
+                        'price' => $price,
                     ]);
                 }
             }

@@ -57,7 +57,8 @@ class ProductController extends Controller
                         'variants' => $product->variants->map(function ($variant) {
                             return [
                                 'size' => $variant->attributes['size'] ?? null,
-                                'stock' => $variant->stock
+                                'stock' => $variant->stock,
+                                'price' => $variant->price
                             ];
                         })->toArray(),
                         'image' => $product->image,

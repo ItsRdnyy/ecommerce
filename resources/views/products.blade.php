@@ -160,7 +160,7 @@
 
                                         <!-- Price and Stock -->
                                         <div class="flex items-center justify-between mb-2">
-                                            <span class="text-[18px] font-light text-gray-900">
+                                            <span id="price-display-{{ $product->id }}" data-base-price="{{ $product->retail_price }}" class="text-[18px] font-light text-gray-900">
                                                 ₱{{ number_format($product->retail_price, 2) }}
                                             </span>
                                             <span id="stock-display-{{ $product->id }}" class="text-[12px] {{ $totalStock > 0 ? 'text-green-700' : 'text-red-600' }}">
@@ -202,14 +202,16 @@
                                                 @php
                                                     $stock = $sizeStocks[$size] ?? 0;
                                                     $isOutOfStock = $stock <= 0;
+                                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                                    $price = $variant ? $variant->price : null;
                                                 @endphp
                                                 <button type="button"
                                                     onclick="window.ProductsPage.selectSize({{ $product->id }}, '{{ $size }}', this)"
                                                     data-stock="{{ $stock }}"
+                                                    data-price="{{ $price }}"
                                                     {{ $isOutOfStock ? 'disabled' : '' }}
                                                     class="size-btn px-3 py-1.5 text-[12px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900' }}">
                                                     {{ $size }}
-                                                   
                                                 </button>
                                                 @endforeach
                                             </div>

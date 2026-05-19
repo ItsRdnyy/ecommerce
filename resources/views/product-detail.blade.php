@@ -90,7 +90,7 @@
 
                         <!-- Price -->
                         <div class="mb-6">
-                            <span class="text-[32px] font-light text-gray-900">
+                            <span class="text-[32px] font-light text-gray-900" id="product-price-display" data-base-price="{{ $product->retail_price }}">
                                 ₱{{ number_format($product->retail_price, 2) }}
                             </span>
                             @if($product->is_wholesale_enabled && $product->wholesale_price > 0)
@@ -171,18 +171,23 @@
                                 </button>
                             </div>
                             <div class="flex flex-wrap gap-2" id="detail-sizes-container">
-                                @foreach($sizes as $size)
+                                 @foreach($sizes as $size)
                                 @php
                                     $stock = $sizeStocks[$size] ?? 0;
                                     $isOutOfStock = $stock <= 0;
+                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                    $price = $variant ? $variant->price : null;
                                 @endphp
                                 <button type="button"
                                     onclick="selectDetailSize('{{ $size }}', this)"
                                     data-stock="{{ $stock }}"
+                                    data-price="{{ $price }}"
                                     {{ $isOutOfStock ? 'disabled' : '' }}
                                     class="detail-size-btn px-4 py-2 text-[13px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900' }}">
                                     {{ $size }}
-                                    
+                                    @if($price)
+                                        <span class="block text-[10px] text-green-600 font-semibold mt-0.5">₱{{ number_format($price, 2) }}</span>
+                                    @endif
                                 </button>
                                 @endforeach
                             </div>
@@ -297,6 +302,15 @@ function selectDetailSize(size, btn) {
     // Hide error
     const err = document.getElementById('detail-size-error');
     if (err) err.classList.add('hidden');
+
+    // Update price display
+    const priceDisplay = document.getElementById('product-price-display');
+    if (priceDisplay) {
+        const variantPrice = btn.dataset.price;
+        const basePrice = parseFloat(priceDisplay.dataset.basePrice) || 0;
+        const activePrice = (variantPrice && variantPrice !== 'null' && variantPrice !== '') ? parseFloat(variantPrice) : basePrice;
+        priceDisplay.textContent = '₱' + activePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
     
     // Update stock display and max quantity
     const stock = parseInt(btn.dataset.stock) || 0;
