@@ -181,11 +181,7 @@
                                             {{ $isOutOfStock ? 'disabled' : '' }}
                                             class="size-btn inline-flex items-center px-2 py-1 text-[11px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-200 text-gray-600 bg-gray-50 hover:border-gray-900' }}">
                                         {{ $size }}
-                                        @if($isOutOfStock)
-                                        <span class="ml-1 text-[9px]">(0)</span>
-                                        @else
-                                        <span class="ml-1 text-[9px] text-gray-500">({{ $stock }})</span>
-                                        @endif
+                                        
                                     </button>
                                     @endforeach
                                 </div>

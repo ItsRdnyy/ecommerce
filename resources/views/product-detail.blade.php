@@ -10,6 +10,10 @@
     $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
     $showSizes = $isApparel || $isShoe;
     $totalStock = $showSizes ? $product->variants->sum('stock') : $product->stock;
+
+    $isPants = str_contains($categoryName, 'pants') || str_contains($categoryName, 'bottom') || str_contains($categoryName, 'trouser') || str_contains($categoryName, 'jeans');
+    $sizeChartImage = $isPants ? 'assets/images/PantsSizeChart.png' : 'assets/images/SizeChart.png';
+    $sizeChartTitle = $isPants ? 'PureFit Pants Size Chart' : 'PureFit Apparel Size Chart';
 @endphp
 
     <!-- Product Detail Page -->
@@ -155,9 +159,17 @@
                         @endphp
                         @if($requiresSize)
                         <div class="mb-8" id="sizes-section">
-                            <h2 class="text-[16px] font-semibold text-gray-900 mb-3">
-                                Select Size <span class="text-red-500">*</span>
-                            </h2>
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-[16px] font-semibold text-gray-900">
+                                    Select Size <span class="text-red-500">*</span>
+                                </h2>
+                                <button type="button" onclick="openSizeChartModal()" class="text-[12px] text-gray-500 hover:text-gray-900 underline flex items-center gap-1 font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 9h1m-1 3h1m-1 3h1m-1 3h1m3-12H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-3" />
+                                    </svg>
+                                    Size Chart
+                                </button>
+                            </div>
                             <div class="flex flex-wrap gap-2" id="detail-sizes-container">
                                 @foreach($sizes as $size)
                                 @php
@@ -170,11 +182,7 @@
                                     {{ $isOutOfStock ? 'disabled' : '' }}
                                     class="detail-size-btn px-4 py-2 text-[13px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900' }}">
                                     {{ $size }}
-                                    @if($isOutOfStock)
-                                    <span class="ml-1 text-[10px]">(0)</span>
-                                    @else
-                                    <span class="ml-1 text-[10px] text-gray-500">({{ $stock }})</span>
-                                    @endif
+                                    
                                 </button>
                                 @endforeach
                             </div>
@@ -235,6 +243,38 @@
                             </div>
                         @endguest
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Size Chart Modal -->
+    <div id="size-chart-modal"
+         class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4 transition-opacity duration-300">
+        <!-- Modal Container -->
+        <div class="relative w-full max-w-5xl scale-95 opacity-0 transition-all duration-300"
+             id="size-chart-content">
+            <!-- Close Button -->
+            <button onclick="closeSizeChartModal()"
+                    class="absolute -top-4 -right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg hover:bg-gray-100 transition">
+                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <!-- Modal Card -->
+            <div class="overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-100">
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-gray-100 px-6 py-5 bg-gradient-to-r from-gray-50 to-white">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-gray-900">{{ $sizeChartTitle }}</h2>
+                        <p class="text-sm text-gray-500 mt-1">Find your perfect fit before ordering</p>
+                    </div>
+                </div>
+                <!-- Image -->
+                <div class="bg-gray-50 p-4 md:p-6 flex items-center justify-center">
+                    <img src="{{ asset($sizeChartImage) }}"
+                         alt="Size Chart"
+                         class="w-full max-h-[80vh] object-contain rounded-2xl border border-gray-200 shadow-sm hover:scale-[1.01] transition-transform duration-300">
                 </div>
             </div>
         </div>
@@ -307,6 +347,32 @@ function selectDetailSize(size, btn) {
             addBtn.querySelector('.btn-text').textContent = 'Add to Cart';
         }
     }
+}
+
+function openSizeChartModal() {
+    const modal = document.getElementById('size-chart-modal');
+    const content = document.getElementById('size-chart-content');
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeSizeChartModal() {
+    const modal = document.getElementById('size-chart-modal');
+    const content = document.getElementById('size-chart-content');
+
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }, 200);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

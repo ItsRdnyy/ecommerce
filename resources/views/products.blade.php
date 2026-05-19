@@ -209,11 +209,7 @@
                                                     {{ $isOutOfStock ? 'disabled' : '' }}
                                                     class="size-btn px-3 py-1.5 text-[12px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900' }}">
                                                     {{ $size }}
-                                                    @if($isOutOfStock)
-                                                    <span class="ml-1 text-[9px]">(0)</span>
-                                                    @else
-                                                    <span class="ml-1 text-[9px] text-gray-500">({{ $stock }})</span>
-                                                    @endif
+                                                   
                                                 </button>
                                                 @endforeach
                                             </div>
@@ -296,9 +292,6 @@
                     </svg>
                     <h3 class="text-[20px] font-medium text-gray-900 mb-2">No products found</h3>
                     <p class="text-gray-600 text-[14px] mb-6">Try adjusting your search or filter criteria.</p>
-                    <a href="{{ route('products') }}" class="inline-block px-6 py-3 bg-gray-900 text-white text-[13px] font-semibold uppercase tracking-wider hover:bg-gray-800 transition-colors">
-                        View All Products
-                    </a>
                 </div>
             @endif
             </div>

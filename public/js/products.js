@@ -440,10 +440,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
                 <h3 class="text-[20px] font-medium text-gray-900 mb-2">No products found</h3>
-                <p class="text-gray-600 text-[14px] mb-6">Try adjusting your search or filter criteria.</p>
-                <button onclick="clearFiltersBtn.click()" class="inline-block px-6 py-3 bg-gray-900 text-white text-[13px] font-semibold uppercase tracking-wider hover:bg-gray-800 transition-colors">
-                    View All Products
-                </button>
+                <p class="text-gray-600 text-[14px]">Try adjusting your search or filter criteria.</p>
             </div>
         `;
     }
