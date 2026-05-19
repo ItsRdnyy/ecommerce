@@ -11,7 +11,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with('category', 'business.businessProfile')->where('status', 'active');
+        $query = Product::with('category', 'business.businessProfile', 'variants')->where('status', 'active');
 
         // Search functionality
         if ($request->has('search') && $request->search) {
@@ -42,6 +42,9 @@ class ProductController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'products' => $products->map(function ($product) {
+                    $catName = strtolower($product->category->name ?? '');
+                    $isApparelOrShoe = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel') || str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
+                    $totalStock = $isApparelOrShoe ? $product->variants->sum('stock') : $product->stock;
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
@@ -50,7 +53,13 @@ class ProductController extends Controller
                         'wholesale_price' => $product->wholesale_price,
                         'moq' => $product->moq,
                         'is_wholesale_enabled' => $product->is_wholesale_enabled,
-                        'stock' => $product->stock,
+                        'stock' => $totalStock,
+                        'variants' => $product->variants->map(function ($variant) {
+                            return [
+                                'size' => $variant->attributes['size'] ?? null,
+                                'stock' => $variant->stock
+                            ];
+                        })->toArray(),
                         'image' => $product->image,
                         'category_name' => $product->category ? $product->category->name : 'General',
                         'gender' => $product->gender,

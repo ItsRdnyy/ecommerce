@@ -102,6 +102,13 @@
                         <!-- Products Grid for this Shop -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             @foreach($shopProducts as $product)
+                                @php
+                                    $categoryName = strtolower($product->category->name ?? '');
+                                    $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                                    $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+                                    $showSizes = $isApparel || $isShoe;
+                                    $totalStock = $showSizes ? $product->variants->sum('stock') : $product->stock;
+                                @endphp
                                 <div class="bg-white border border-[#e8e5e0] group hover:shadow-xl transition-all duration-300">
                                     <!-- Product Image -->
                                     <div class="aspect-[3/4] overflow-hidden bg-gray-100 relative">
@@ -118,11 +125,11 @@
                                         @endif
 
                                         <!-- Stock Badge -->
-                                        @if($product->stock == 0)
+                                        @if($totalStock == 0)
                                             <div class="absolute top-3 left-3 px-3 py-1 bg-red-600 text-white text-[11px] font-semibold uppercase tracking-wider rounded-full">
                                                 Out of Stock
                                             </div>
-                                        @elseif($product->stock <= 10)
+                                        @elseif($totalStock <= 10)
                                             <div class="absolute top-3 left-3 px-3 py-1 bg-orange-500 text-white text-[11px] font-semibold uppercase tracking-wider rounded-full">
                                                 Low Stock
                                             </div>
@@ -156,8 +163,8 @@
                                             <span class="text-[18px] font-light text-gray-900">
                                                 ₱{{ number_format($product->retail_price, 2) }}
                                             </span>
-                                            <span class="text-[12px] {{ $product->stock > 0 ? 'text-green-700' : 'text-red-600' }}">
-                                                {{ $product->stock > 0 ? $product->stock . ' in stock' : 'Out of stock' }}
+                                            <span id="stock-display-{{ $product->id }}" class="text-[12px] {{ $totalStock > 0 ? 'text-green-700' : 'text-red-600' }}">
+                                                {{ $totalStock > 0 ? $totalStock . ' in stock' : 'Out of stock' }}
                                             </span>
                                         </div>
                                         @if($product->is_wholesale_enabled && $product->wholesale_price > 0)
@@ -168,16 +175,23 @@
 
                                         <!-- Sizes (Apparel & Shoes) -->
                                         @php
-                                            $categoryName = strtolower($product->category->name ?? '');
-                                            $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
-                                            $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
-                                            $showSizes = $isApparel || $isShoe;
                                             if ($isShoe) {
                                                 $sizes = collect(range(38, 48));
+                                                $sizeStocks = [];
+                                                foreach ($sizes as $size) {
+                                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                                    $sizeStocks[$size] = $variant ? $variant->stock : 0;
+                                                }
                                             } elseif ($isApparel && $product->variants) {
-                                                $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values();
+                                                $sizes = $product->variants->map(fn($v) => data_get($v->attributes, 'size'))->filter()->unique()->values();
+                                                $sizeStocks = [];
+                                                foreach ($sizes as $size) {
+                                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                                    $sizeStocks[$size] = $variant ? $variant->stock : 0;
+                                                }
                                             } else {
                                                 $sizes = collect();
+                                                $sizeStocks = [];
                                             }
                                         @endphp
                                         @if($showSizes && $sizes->isNotEmpty())
@@ -185,10 +199,21 @@
                                             <p class="text-[11px] text-gray-500 mb-1">Size <span class="text-red-500">*</span></p>
                                             <div class="flex flex-wrap gap-1.5" id="sizes-{{ $product->id }}">
                                                 @foreach($sizes as $size)
+                                                @php
+                                                    $stock = $sizeStocks[$size] ?? 0;
+                                                    $isOutOfStock = $stock <= 0;
+                                                @endphp
                                                 <button type="button"
                                                     onclick="window.ProductsPage.selectSize({{ $product->id }}, '{{ $size }}', this)"
-                                                    class="size-btn px-3 py-1.5 text-[12px] font-medium border border-gray-300 rounded text-gray-700 hover:border-gray-900 transition-colors">
+                                                    data-stock="{{ $stock }}"
+                                                    {{ $isOutOfStock ? 'disabled' : '' }}
+                                                    class="size-btn px-3 py-1.5 text-[12px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900' }}">
                                                     {{ $size }}
+                                                    @if($isOutOfStock)
+                                                    <span class="ml-1 text-[9px]">(0)</span>
+                                                    @else
+                                                    <span class="ml-1 text-[9px] text-gray-500">({{ $stock }})</span>
+                                                    @endif
                                                 </button>
                                                 @endforeach
                                             </div>
@@ -211,9 +236,9 @@
                                                        id="quantity-{{ $product->id }}"
                                                        value="1"
                                                        min="1"
-                                                       max="{{ $product->stock }}"
+                                                       max="{{ $totalStock }}"
                                                        class="w-16 px-3 py-2 text-center border border-[#e8e5e0] bg-[#f5f3ef] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900">
-                                                <button onclick="window.ProductsPage.incrementQuantity({{ $product->id }}, {{ $product->stock }})"
+                                                <button onclick="window.ProductsPage.incrementQuantity({{ $product->id }}, {{ $totalStock }})"
                                                         class="w-8 h-8 flex items-center justify-center border border-[#e8e5e0] bg-[#f5f3ef] text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.5v15m7.5-7.5h-15" />
@@ -224,7 +249,7 @@
                                             <!-- Action Buttons -->
                                             <div class="flex gap-2">
                                                 @auth
-                                                    @if($product->stock > 0)
+                                                    @if($totalStock > 0)
                                                         <button onclick="window.ProductsPage.addToCart({{ $product->id }})"
                                                                 id="add-to-cart-{{ $product->id }}"
                                                                 class="flex-1 py-2.5 px-4 bg-gray-900 text-white text-[12px] font-semibold uppercase tracking-wider hover:bg-gray-800 transition-colors flex items-center justify-center gap-2">

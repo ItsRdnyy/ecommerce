@@ -122,9 +122,16 @@
                             @endif
                             
                             <!-- Status Badge -->
+                            @php
+                                $catName = strtolower($product->category->name ?? '');
+                                $isApparelLP = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
+                                $isShoeLP = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
+                                $showSizesLP = $isApparelLP || $isShoeLP;
+                                $totalStock = $showSizesLP ? $product->variants->sum('stock') : $product->stock;
+                            @endphp
                             <div class="absolute top-4 right-4">
-                                <span class="inline-flex px-3 py-1 text-[10px] font-semibold tracking-wider uppercase rounded-full {{ $product->stock == 0 ? 'bg-red-600 text-white' : 'bg-gray-900 text-white' }}">
-                                    {{ $product->stock == 0 ? 'Out of Stock' : 'New' }}
+                                <span class="inline-flex px-3 py-1 text-[10px] font-semibold tracking-wider uppercase rounded-full {{ $totalStock == 0 ? 'bg-red-600 text-white' : 'bg-gray-900 text-white' }}">
+                                    {{ $totalStock == 0 ? 'Out of Stock' : 'New' }}
                                 </span>
                             </div>
                         </div>
@@ -140,15 +147,23 @@
 
                             <!-- Available Sizes -->
                             @php
-                                $catName = strtolower($product->category->name ?? '');
-                                $isApparelLP = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
-                                $isShoeLP = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
                                 if ($isShoeLP) {
                                     $lpSizes = collect(range(38, 48));
+                                    $lpSizeStocks = [];
+                                    foreach ($lpSizes as $size) {
+                                        $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                        $lpSizeStocks[$size] = $variant ? $variant->stock : 0;
+                                    }
                                 } elseif ($isApparelLP && $product->variants) {
-                                    $lpSizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values();
+                                    $lpSizes = $product->variants->map(fn($v) => data_get($v->attributes, 'size'))->filter()->unique()->values();
+                                    $lpSizeStocks = [];
+                                    foreach ($lpSizes as $size) {
+                                        $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                        $lpSizeStocks[$size] = $variant ? $variant->stock : 0;
+                                    }
                                 } else {
                                     $lpSizes = collect();
+                                    $lpSizeStocks = [];
                                 }
                             @endphp
                             @if($lpSizes->isNotEmpty())
@@ -156,10 +171,21 @@
                                 <p class="text-[11px] text-gray-500 mb-1">Size <span class="text-red-500">*</span></p>
                                 <div class="flex flex-wrap gap-1" id="sizes-{{ $product->id }}">
                                     @foreach($lpSizes as $size)
+                                    @php
+                                        $stock = $lpSizeStocks[$size] ?? 0;
+                                        $isOutOfStock = $stock <= 0;
+                                    @endphp
                                     <button type="button"
                                             onclick="LandingPage.selectSize({{ $product->id }}, '{{ $size }}', this)"
-                                            class="size-btn inline-flex items-center px-2 py-1 text-[11px] font-medium border border-gray-200 rounded text-gray-600 bg-gray-50 hover:border-gray-900 transition-colors">
+                                            data-stock="{{ $stock }}"
+                                            {{ $isOutOfStock ? 'disabled' : '' }}
+                                            class="size-btn inline-flex items-center px-2 py-1 text-[11px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-200 text-gray-600 bg-gray-50 hover:border-gray-900' }}">
                                         {{ $size }}
+                                        @if($isOutOfStock)
+                                        <span class="ml-1 text-[9px]">(0)</span>
+                                        @else
+                                        <span class="ml-1 text-[9px] text-gray-500">({{ $stock }})</span>
+                                        @endif
                                     </button>
                                     @endforeach
                                 </div>
@@ -185,9 +211,9 @@
                             <div class="flex gap-3">
                                 <button onclick="LandingPage.addToCart({{ $product->id }})"
                                         id="add-to-cart-{{ $product->id }}"
-                                        class="add-to-cart-btn flex-1 btn-primary text-[10px] py-2.5 {{ $product->stock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                                        {{ $product->stock == 0 ? 'disabled' : '' }}>
-                                    <span class="btn-text">{{ $product->stock == 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
+                                        class="add-to-cart-btn flex-1 btn-primary text-[10px] py-2.5 {{ $totalStock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                        {{ $totalStock == 0 ? 'disabled' : '' }}>
+                                    <span class="btn-text">{{ $totalStock == 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
                                     <span class="btn-loading hidden">
                                         <svg class="animate-spin h-4 w-4 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

@@ -87,6 +87,10 @@
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Available Sizes (Comma Separated)</label>
                 <input type="text" id="create_sizes" name="sizes" placeholder="e.g. S, M, L, XL" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                 <p class="text-[10px] text-gray-500 mt-1">This will automatically create variants for each size.</p>
+                <div id="create_sizes_stock_container" class="mt-3 hidden">
+                    <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock per Size</label>
+                    <div id="create_sizes_stock_inputs" class="space-y-2"></div>
+                </div>
             </div>
             <div class="sm:col-span-2">
                 <button type="submit" class="px-6 py-2.5 bg-[#111] text-white text-[12px] font-semibold tracking-[0.1em] uppercase rounded hover:bg-gray-800 transition-colors">Add Product</button>
@@ -319,6 +323,10 @@
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Available Sizes (Comma Separated)</label>
                         <input type="text" id="edit_sizes" name="sizes" placeholder="e.g. S, M, L, XL" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                         <p class="text-[10px] text-gray-500 mt-1">This will automatically create variants for each size.</p>
+                        <div id="edit_sizes_stock_container" class="mt-3 hidden">
+                            <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock per Size</label>
+                            <div id="edit_sizes_stock_inputs" class="space-y-2"></div>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Product Image</label>

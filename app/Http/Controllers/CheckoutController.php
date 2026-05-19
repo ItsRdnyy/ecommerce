@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Shipment;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\DiscountEngine;
 use App\Services\ShippingCalculator;
 use App\Services\InventoryManager;
@@ -49,7 +50,7 @@ class CheckoutController extends Controller
         ]);
 
         $cart = Cart::where('user_id', auth()->id())
-            ->with('items.product')
+            ->with('items.product.variants')
             ->first();
 
         if (!$cart || $cart->items->isEmpty()) {
@@ -65,6 +66,25 @@ class CheckoutController extends Controller
                 $subtotal = 0;
                 $discountTotal = 0;
                 $shippingTotal = 0;
+
+                // Validate stock for all items before creating order
+                foreach ($items as $item) {
+                    $product = $item->product;
+                    $size = $item->size;
+
+                    if ($size) {
+                        $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+
+                        if (!$variant || $variant->stock < $item->quantity) {
+                            $available = $variant ? $variant->stock : 0;
+                            throw new \Exception("Insufficient stock for {$product->name} (size {$size}). Available: {$available}");
+                        }
+                    } else {
+                        if ($product->stock < $item->quantity) {
+                            throw new \Exception("Insufficient stock for {$product->name}. Available: {$product->stock}");
+                        }
+                    }
+                }
 
                 foreach ($items as $item) {
                     $product = $item->product;
@@ -105,13 +125,20 @@ class CheckoutController extends Controller
 
                 foreach ($items as $item) {
                     $product = $item->product;
+                    $size = $item->size;
                     $calc = DiscountEngine::calculate($product, $item->quantity, $item->type);
+
+                    // Find variant if size is selected
+                    $variant = null;
+                    if ($size) {
+                        $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                    }
 
                     OrderItem::create([
                         'order_id' => $order->id,
                         'product_id' => $product->id,
-                        'variant_id' => $item->variant_id,
-                        'variant_name' => $item->variant ? $item->variant->name : null,
+                        'variant_id' => $variant ? $variant->id : null,
+                        'variant_name' => $variant ? $variant->name : null,
                         'quantity' => $item->quantity,
                         'price' => $calc['unit_price'],
                         'original_price' => $calc['base_price'],
@@ -121,6 +148,15 @@ class CheckoutController extends Controller
                             ($product->weight ?? 0.5) * $item->quantity
                         ),
                     ]);
+
+                    // Deduct stock from variant or product
+                    if ($variant) {
+                        $variant->stock -= $item->quantity;
+                        $variant->save();
+                    } else {
+                        $product->stock -= $item->quantity;
+                        $product->save();
+                    }
                 }
 
                 Shipment::create([

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\DiscountEngine;
 use App\Services\ShippingCalculator;
 
@@ -28,7 +29,7 @@ class CartController extends Controller
             'size' => 'nullable|string|max:10',
         ]);
 
-        $product = Product::with('category')->findOrFail($request->product_id);
+        $product = Product::with(['category', 'variants'])->findOrFail($request->product_id);
         $quantity = (int) $request->quantity;
         $size = $request->size;
 
@@ -41,15 +42,22 @@ class CartController extends Controller
             return $this->jsonOrRedirect($request, 'Please select a size.', false, 422);
         }
 
-        // Check if product is in stock
-        if ($product->stock < $quantity) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient stock. Available: ' . $product->stock
-                ], 400);
+        // Check stock based on size selection
+        if ($size) {
+            $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+
+            if (!$variant) {
+                return $this->jsonOrRedirect($request, 'Selected size not available.', false, 422);
             }
-            return back()->with('error', 'Insufficient stock. Available: ' . $product->stock);
+
+            if ($variant->stock < $quantity) {
+                return $this->jsonOrRedirect($request, 'Insufficient stock for selected size. Available: ' . $variant->stock, false, 400);
+            }
+        } else {
+            // Check if product is in stock (for non-size products)
+            if ($product->stock < $quantity) {
+                return $this->jsonOrRedirect($request, 'Insufficient stock. Available: ' . $product->stock, false, 400);
+            }
         }
 
         $cart = $this->getOrCreateCart();
@@ -69,8 +77,17 @@ class CartController extends Controller
         if ($existing) {
             $newQuantity = $existing->quantity + $quantity;
 
-            if ($product->stock < $newQuantity) {
-                return $this->jsonOrRedirect($request, 'Insufficient stock. Available: ' . $product->stock, false, 400);
+            // Check stock based on size
+            if ($size) {
+                $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+
+                if ($variant && $variant->stock < $newQuantity) {
+                    return $this->jsonOrRedirect($request, 'Insufficient stock for selected size. Available: ' . $variant->stock, false, 400);
+                }
+            } else {
+                if ($product->stock < $newQuantity) {
+                    return $this->jsonOrRedirect($request, 'Insufficient stock. Available: ' . $product->stock, false, 400);
+                }
             }
 
             $itemType = $this->resolveCartItemType($product, $newQuantity);
@@ -100,16 +117,25 @@ class CartController extends Controller
         $request->validate(['quantity' => 'required|integer|min:1|max:99']);
 
         $product = $item->product;
+        $product->load('variants');
         $quantity = (int) $request->quantity;
+        $size = $item->size;
 
-        if ($product->stock < $quantity) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient stock. Available: ' . $product->stock
-                ], 400);
+        // Check stock based on size
+        if ($size) {
+            $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+
+            if (!$variant) {
+                return $this->jsonOrRedirect($request, 'Selected size not available.', false, 422);
             }
-            return back()->with('error', 'Insufficient stock. Available: ' . $product->stock);
+
+            if ($variant->stock < $quantity) {
+                return $this->jsonOrRedirect($request, 'Insufficient stock for selected size. Available: ' . $variant->stock, false, 400);
+            }
+        } else {
+            if ($product->stock < $quantity) {
+                return $this->jsonOrRedirect($request, 'Insufficient stock. Available: ' . $product->stock, false, 400);
+            }
         }
 
         $itemType = $this->resolveCartItemType($product, $quantity);

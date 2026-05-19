@@ -5,6 +5,11 @@
 @section('content')
 @php
     $isAuthenticated = auth()->check();
+    $categoryName = strtolower($product->category->name ?? '');
+    $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+    $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+    $showSizes = $isApparel || $isShoe;
+    $totalStock = $showSizes ? $product->variants->sum('stock') : $product->stock;
 @endphp
 
     <!-- Product Detail Page -->
@@ -93,27 +98,27 @@
                         </div>
 
                         <!-- Stock Status -->
-                        <div class="mb-6">
-                            @if($product->stock == 0)
+                        <div class="mb-6" id="stock-status-container">
+                            @if($totalStock == 0)
                                 <span class="inline-flex items-center gap-2 text-red-600">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                     Out of Stock
                                 </span>
-                            @elseif($product->stock <= 10)
+                            @elseif($totalStock <= 10)
                                 <span class="inline-flex items-center gap-2 text-orange-600">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                    Only {{ $product->stock }} left in stock
+                                    Only {{ $totalStock }} left in stock
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-2 text-green-700">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
-                                    In Stock ({{ $product->stock }} available)
+                                    In Stock ({{ $totalStock }} available)
                                 </span>
                             @endif
                         </div>
@@ -128,15 +133,23 @@
 
                         <!-- Available Sizes -->
                         @php
-                            $categoryName = strtolower($product->category->name ?? '');
-                            $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
-                            $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
                             if ($isShoe) {
                                 $sizes = collect(range(38, 48));
+                                $sizeStocks = [];
+                                foreach ($sizes as $size) {
+                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                    $sizeStocks[$size] = $variant ? $variant->stock : 0;
+                                }
                             } elseif ($isApparel && $product->variants) {
-                                $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values();
+                                $sizes = $product->variants->map(fn($v) => data_get($v->attributes, 'size'))->filter()->unique()->values();
+                                $sizeStocks = [];
+                                foreach ($sizes as $size) {
+                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                    $sizeStocks[$size] = $variant ? $variant->stock : 0;
+                                }
                             } else {
                                 $sizes = collect();
+                                $sizeStocks = [];
                             }
                             $requiresSize = $sizes->isNotEmpty();
                         @endphp
@@ -147,10 +160,21 @@
                             </h2>
                             <div class="flex flex-wrap gap-2" id="detail-sizes-container">
                                 @foreach($sizes as $size)
+                                @php
+                                    $stock = $sizeStocks[$size] ?? 0;
+                                    $isOutOfStock = $stock <= 0;
+                                @endphp
                                 <button type="button"
                                     onclick="selectDetailSize('{{ $size }}', this)"
-                                    class="detail-size-btn px-4 py-2 text-[13px] font-medium border border-gray-300 rounded hover:border-gray-900 transition-colors text-gray-700">
+                                    data-stock="{{ $stock }}"
+                                    {{ $isOutOfStock ? 'disabled' : '' }}
+                                    class="detail-size-btn px-4 py-2 text-[13px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900' }}">
                                     {{ $size }}
+                                    @if($isOutOfStock)
+                                    <span class="ml-1 text-[10px]">(0)</span>
+                                    @else
+                                    <span class="ml-1 text-[10px] text-gray-500">({{ $stock }})</span>
+                                    @endif
                                 </button>
                                 @endforeach
                             </div>
@@ -175,9 +199,9 @@
                                                id="quantity"
                                                value="1"
                                                min="1"
-                                               max="{{ $product->stock }}"
+                                               max="{{ $totalStock }}"
                                                class="w-20 px-3 py-2 text-center border border-[#e8e5e0] bg-[#f5f3ef] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900">
-                                        <button onclick="document.getElementById('quantity').value = Math.min({{ $product->stock }}, parseInt(document.getElementById('quantity').value) + 1)"
+                                        <button onclick="document.getElementById('quantity').value = Math.min(document.getElementById('quantity').max, parseInt(document.getElementById('quantity').value) + 1)"
                                                 class="w-10 h-10 flex items-center justify-center border border-[#e8e5e0] bg-[#f5f3ef] text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.5v15m7.5-7.5h-15" />
@@ -186,12 +210,12 @@
                                     </div>
                                 </div>
 
-                                <button class="add-to-cart-btn w-full btn-primary py-3 {{ $product->stock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                <button class="add-to-cart-btn w-full btn-primary py-3 {{ $totalStock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
                                         data-product-id="{{ $product->id }}"
                                         data-product-name="{{ $product->name }}"
                                         data-quantity-selector="quantity"
-                                        {{ $product->stock == 0 ? 'disabled' : '' }}>
-                                    <span class="btn-text">{{ $product->stock == 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
+                                        {{ $totalStock == 0 ? 'disabled' : '' }}>
+                                    <span class="btn-text">{{ $totalStock == 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
                                     <span class="btn-loading hidden">
                                         <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -233,6 +257,63 @@ function selectDetailSize(size, btn) {
     // Hide error
     const err = document.getElementById('detail-size-error');
     if (err) err.classList.add('hidden');
+    
+    // Update stock display and max quantity
+    const stock = parseInt(btn.dataset.stock) || 0;
+    const stockContainer = document.getElementById('stock-status-container');
+    if (stockContainer) {
+        if (stock === 0) {
+            stockContainer.innerHTML = `<span class="inline-flex items-center gap-2 text-red-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Out of Stock
+                                </span>`;
+        } else if (stock <= 10) {
+            stockContainer.innerHTML = `<span class="inline-flex items-center gap-2 text-orange-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Only ${stock} left in stock
+                                </span>`;
+        } else {
+            stockContainer.innerHTML = `<span class="inline-flex items-center gap-2 text-green-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    In Stock (${stock} available)
+                                </span>`;
+        }
+    }
+    
+    const quantityInput = document.getElementById('quantity');
+    if (quantityInput) {
+        quantityInput.max = stock;
+        if (parseInt(quantityInput.value) > stock) {
+            quantityInput.value = stock > 0 ? stock : 1;
+        }
+    }
+    
+    // Update Add to Cart button state
+    const addBtn = document.querySelector('.add-to-cart-btn');
+    if (addBtn) {
+        if (stock === 0) {
+            addBtn.disabled = true;
+            addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            addBtn.querySelector('.btn-text').textContent = 'Out of Stock';
+        } else {
+            addBtn.disabled = false;
+            addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            addBtn.querySelector('.btn-text').textContent = 'Add to Cart';
+        }
+    }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const firstBtn = document.querySelector('.detail-size-btn:not([disabled])');
+    if (firstBtn) {
+        firstBtn.click();
+    }
+});
 </script>
 @endpush

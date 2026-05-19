@@ -133,6 +133,9 @@
             genderFilter.value = '';
             filterProducts();
         });
+
+        // Auto-select first available size for initial load
+        setTimeout(autoSelectFirstAvailableSizes, 150);
     }
 
     /**
@@ -256,6 +259,7 @@
         // Clear and set new content (prevents duplication)
         productsGrid.innerHTML = '';
         productsGrid.innerHTML = html;
+        setTimeout(autoSelectFirstAvailableSizes, 50);
     }
 
     /**
@@ -293,17 +297,36 @@
         const isApparel = ['clothing','shirt','pants','dress','apparel'].some(k => catName.includes(k));
         let sizesHtml = '';
         if (isShoe || isApparel) {
-            const sizeList = isShoe
-                ? [38,39,40,41,42,43,44,45,46,47,48]
-                : (product.sizes || []);
+            let sizeList = [];
+            let sizeStocks = {};
+            if (isShoe) {
+                sizeList = [38,39,40,41,42,43,44,45,46,47,48];
+                sizeList.forEach(s => {
+                    const variant = (product.variants || []).find(v => String(v.size) === String(s));
+                    sizeStocks[s] = variant ? variant.stock : 0;
+                });
+            } else if (isApparel && product.variants) {
+                const sizes = product.variants.map(v => v.size).filter(Boolean);
+                sizeList = [...new Set(sizes)];
+                sizeList.forEach(s => {
+                    const variant = product.variants.find(v => String(v.size) === String(s));
+                    sizeStocks[s] = variant ? variant.stock : 0;
+                });
+            }
+
             if (sizeList.length > 0) {
-                const chips = sizeList.map(s =>
-                    `<button type="button"
+                const chips = sizeList.map(s => {
+                    const stock = sizeStocks[s] || 0;
+                    const isOutOfStock = stock <= 0;
+                    return `<button type="button"
                         onclick="window.ProductsPage.selectSize(${product.id}, '${s}', this)"
-                        class="size-btn px-3 py-1.5 text-[12px] font-medium border border-gray-300 rounded text-gray-700 hover:border-gray-900 transition-colors">
+                        data-stock="${stock}"
+                        ${isOutOfStock ? 'disabled' : ''}
+                        class="size-btn px-3 py-1.5 text-[12px] font-medium border rounded transition-colors ${isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900'}">
                         ${s}
-                    </button>`
-                ).join('');
+                        ${isOutOfStock ? '<span class="ml-1 text-[9px]">(0)</span>' : `<span class="ml-1 text-[9px] text-gray-500">(${stock})</span>`}
+                    </button>`;
+                }).join('');
                 sizesHtml = `
                     <div class="mb-4">
                         <p class="text-[11px] text-gray-500 mb-1">Size <span class="text-red-500">*</span></p>
@@ -364,7 +387,7 @@
                         <span class="text-[18px] font-light text-gray-900">
                             ₱${parseFloat(product.retail_price).toFixed(2)}
                         </span>
-                        <span class="text-[12px] ${product.stock > 0 ? 'text-green-700' : 'text-red-600'}">
+                        <span id="stock-display-${product.id}" class="text-[12px] ${product.stock > 0 ? 'text-green-700' : 'text-red-600'}">
                             ${product.stock > 0 ? product.stock + ' in stock' : 'Out of stock'}
                         </span>
                     </div>
@@ -426,11 +449,28 @@
     }
 
     /**
+     * Auto-select the first available size variant for all products on page
+     */
+    function autoSelectFirstAvailableSizes() {
+        document.querySelectorAll('[id^="sizes-"]').forEach(container => {
+            const productId = container.id.replace('sizes-', '');
+            const selectedInput = document.getElementById(`selected-size-${productId}`);
+            if (selectedInput && selectedInput.value === '') {
+                const firstBtn = container.querySelector('.size-btn:not([disabled])');
+                if (firstBtn) {
+                    firstBtn.click();
+                }
+            }
+        });
+    }
+
+    /**
      * Increment quantity
      */
-    function incrementQuantity(id, stock) {
+    function incrementQuantity(id, defaultStock) {
         const input = document.getElementById(`quantity-${id}`);
-        if (parseInt(input.value) < stock) {
+        const maxStock = input.hasAttribute('max') ? parseInt(input.max) : defaultStock;
+        if (parseInt(input.value) < maxStock) {
             input.value++;
         }
     }
@@ -466,6 +506,22 @@
         // Hide error if shown
         const err = document.getElementById(`size-error-${productId}`);
         if (err) err.classList.add('hidden');
+        
+        // Update stock display and quantity max
+        const stock = parseInt(btn.dataset.stock) || 0;
+        const stockDisplay = document.getElementById(`stock-display-${productId}`);
+        if (stockDisplay) {
+            stockDisplay.className = `text-[12px] ${stock > 0 ? 'text-green-700' : 'text-red-600'}`;
+            stockDisplay.textContent = stock > 0 ? `${stock} in stock` : 'Out of stock';
+        }
+
+        const quantityInput = document.getElementById(`quantity-${productId}`);
+        if (quantityInput) {
+            quantityInput.max = stock;
+            if (parseInt(quantityInput.value) > stock) {
+                quantityInput.value = stock > 0 ? stock : 1;
+            }
+        }
     }
 
     /**

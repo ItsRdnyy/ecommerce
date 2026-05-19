@@ -27,16 +27,41 @@ function toggleSizesField(selectEl, containerId) {
         if (input) input.placeholder = 'e.g. S, M, L, XL';
     } else if (type === 'shoe') {
         container.classList.remove('hidden');
-        if (input) {
-            input.placeholder = 'e.g. 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48';
-            if (!input.value) {
-                input.value = '38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48';
-            }
-        }
+        if (input) input.placeholder = 'e.g. 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48';
     } else {
         container.classList.add('hidden');
         if (input) input.value = '';
     }
+}
+
+function generateSizeStockInputs(sizesInputId, stockContainerId, stockInputsId) {
+    const sizesInput = document.getElementById(sizesInputId);
+    const stockContainer = document.getElementById(stockContainerId);
+    const stockInputs = document.getElementById(stockInputsId);
+
+    if (!sizesInput || !stockContainer || !stockInputs) return;
+
+    sizesInput.addEventListener('input', function() {
+        const sizes = this.value.split(',').map(s => s.trim()).filter(s => s);
+
+        if (sizes.length > 0) {
+            stockContainer.classList.remove('hidden');
+            stockInputs.innerHTML = '';
+
+            sizes.forEach(size => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2';
+                div.innerHTML = `
+                    <label class="text-[12px] text-gray-600 w-12">${size}:</label>
+                    <input type="number" name="sizes_stock[${size}]" min="0" value="0" class="flex-1 border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400" placeholder="Stock">
+                `;
+                stockInputs.appendChild(div);
+            });
+        } else {
+            stockContainer.classList.add('hidden');
+            stockInputs.innerHTML = '';
+        }
+    });
 }
 
 // Init create form category listener
@@ -54,6 +79,12 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleSizesField(this, 'edit_sizes_container');
         });
     }
+
+    // Initialize size stock inputs for create form
+    generateSizeStockInputs('create_sizes', 'create_sizes_stock_container', 'create_sizes_stock_inputs');
+
+    // Initialize size stock inputs for edit form
+    generateSizeStockInputs('edit_sizes', 'edit_sizes_stock_container', 'edit_sizes_stock_inputs');
 });
 
 function openEditModal(productId) {
@@ -90,6 +121,23 @@ function openEditModal(productId) {
             const editSizes = document.getElementById('edit_sizes');
             if (editSizes) {
                 editSizes.value = data.sizes_string || '';
+                // Trigger input event to generate stock inputs
+                editSizes.dispatchEvent(new Event('input'));
+
+                // Populate stock values from variants
+                if (data.variants && data.variants.length > 0) {
+                    setTimeout(() => {
+                        data.variants.forEach(variant => {
+                            const size = variant.attributes?.size;
+                            if (size) {
+                                const stockInput = document.querySelector(`input[name="sizes_stock[${size}]"]`);
+                                if (stockInput) {
+                                    stockInput.value = variant.stock || 0;
+                                }
+                            }
+                        });
+                    }, 100);
+                }
             }
 
             document.getElementById('editForm').action = `/business/products/${data.id}`;

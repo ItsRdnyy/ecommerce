@@ -115,6 +115,31 @@
         }, 2500);
     }
 
+    /**
+     * Auto-select the first available size variant for all products on landing page
+     */
+    function autoSelectFirstAvailableSizes() {
+        document.querySelectorAll('[id^="sizes-"]').forEach(container => {
+            const productId = container.id.replace('sizes-', '');
+            const selectedInput = document.getElementById(`selected-size-${productId}`);
+            if (selectedInput && selectedInput.value === '') {
+                const firstBtn = container.querySelector('.size-btn:not([disabled])');
+                if (firstBtn) {
+                    firstBtn.click();
+                }
+            }
+        });
+    }
+
+    // Auto-select on load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(autoSelectFirstAvailableSizes, 150);
+        });
+    } else {
+        setTimeout(autoSelectFirstAvailableSizes, 150);
+    }
+
     // Expose functions globally for onclick handlers
     window.LandingPage = {
         selectSize,

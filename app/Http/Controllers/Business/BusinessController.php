@@ -158,6 +158,8 @@ class BusinessController extends Controller
             'bulk_max_quantity' => 'array',
             'bulk_max_quantity.*' => 'nullable|integer|min:1',
             'sizes' => 'nullable|string|max:255',
+            'sizes_stock' => 'nullable|array',
+            'sizes_stock.*' => 'nullable|integer|min:0',
         ]);
 
         $imagePath = null;
@@ -194,12 +196,16 @@ class BusinessController extends Controller
         // Create variants for sizes if provided
         if ($request->filled('sizes')) {
             $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));
+            $sizesStock = $request->input('sizes_stock', []);
+
             foreach ($sizes as $size) {
                 if (!empty($size)) {
+                    $stock = $sizesStock[$size] ?? 0;
                     ProductVariant::create([
                         'product_id' => $product->id,
                         'name' => $product->name . ' - ' . $size,
                         'attributes' => ['size' => $size],
+                        'stock' => $stock,
                     ]);
                 }
             }
@@ -217,6 +223,13 @@ class BusinessController extends Controller
         $product->load('variants');
         $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values()->toArray();
         $product->sizes_string = implode(', ', $sizes);
+        $product->variants = $product->variants->map(function($variant) {
+            return [
+                'id' => $variant->id,
+                'attributes' => $variant->attributes,
+                'stock' => $variant->stock,
+            ];
+        });
 
         return response()->json($product);
     }
@@ -238,6 +251,8 @@ class BusinessController extends Controller
             'gender' => 'required|in:men,women,unisex',
             'image' => 'nullable|file|max:10240',
             'sizes' => 'nullable|string|max:255',
+            'sizes_stock' => 'nullable|array',
+            'sizes_stock.*' => 'nullable|integer|min:0',
         ]);
 
         $updateData = [
@@ -260,8 +275,20 @@ class BusinessController extends Controller
 
         if ($request->filled('sizes')) {
             $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));
-            $existingSizes = $product->variants()->get()->map(fn($v) => $v->attributes['size'] ?? null)->filter()->values()->toArray();
+            $sizesStock = $request->input('sizes_stock', []);
+            $existingVariants = $product->variants()->get();
+            $existingSizes = $existingVariants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->values()->toArray();
 
+            // Update existing variants stock
+            foreach ($existingVariants as $variant) {
+                $size = $variant->attributes['size'] ?? null;
+                if ($size && in_array($size, $sizes)) {
+                    $variant->stock = $sizesStock[$size] ?? 0;
+                    $variant->save();
+                }
+            }
+
+            // Create new variants for new sizes
             $newSizes = array_diff($sizes, $existingSizes);
             foreach ($newSizes as $size) {
                 if (!empty($size)) {
@@ -269,8 +296,15 @@ class BusinessController extends Controller
                         'product_id' => $product->id,
                         'name' => $product->name . ' - ' . $size,
                         'attributes' => ['size' => $size],
+                        'stock' => $sizesStock[$size] ?? 0,
                     ]);
                 }
+            }
+
+            // Delete variants for removed sizes
+            $removedSizes = array_diff($existingSizes, $sizes);
+            foreach ($removedSizes as $size) {
+                $product->variants()->where('attributes->size', $size)->delete();
             }
         }
 
