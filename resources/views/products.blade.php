@@ -107,7 +107,8 @@
                                     $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
                                     $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
                                     $showSizes = $isApparel || $isShoe;
-                                    $totalStock = $showSizes ? $product->variants->sum('stock') : $product->stock;
+                                    $variantsStock = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;
+                                    $totalStock = $showSizes && $product->variants->count() > 0 ? $variantsStock : $product->stock;
                                 @endphp
                                 <div class="bg-white border border-[#e8e5e0] group hover:shadow-xl transition-all duration-300">
                                     <!-- Product Image -->

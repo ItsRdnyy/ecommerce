@@ -107,6 +107,16 @@
 
                         <!-- Stock Status -->
                         <div class="mb-6" id="stock-status-container">
+                            @php
+                                if (!isset($totalStock)) {
+                                    $catName = strtolower($product->category->name ?? '');
+                                    $isApparelDetail = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
+                                    $isShoeDetail = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
+                                    $showSizesDetail = $isApparelDetail || $isShoeDetail;
+                                    $variantsStockDetail = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;
+                                    $totalStock = $showSizesDetail && $product->variants->count() > 0 ? $variantsStockDetail : $product->stock;
+                                }
+                            @endphp
                             @if($totalStock == 0)
                                 <span class="inline-flex items-center gap-2 text-red-600">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -127,7 +127,8 @@
                                 $isApparelLP = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
                                 $isShoeLP = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
                                 $showSizesLP = $isApparelLP || $isShoeLP;
-                                $totalStock = $showSizesLP ? $product->variants->sum('stock') : $product->stock;
+                                $variantsStockLP = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;
+                                $totalStock = $showSizesLP && $product->variants->count() > 0 ? $variantsStockLP : $product->stock;
                             @endphp
                             <div class="absolute top-4 right-4">
                                 <span class="inline-flex px-3 py-1 text-[10px] font-semibold tracking-wider uppercase rounded-full {{ $totalStock == 0 ? 'bg-red-600 text-white' : 'bg-gray-900 text-white' }}">
