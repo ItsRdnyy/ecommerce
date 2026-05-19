@@ -167,9 +167,12 @@
                                                 {{ $totalStock > 0 ? $totalStock . ' in stock' : 'Out of stock' }}
                                             </span>
                                         </div>
-                                        @if($product->is_wholesale_enabled && $product->wholesale_price > 0)
-                                            <p class="text-[12px] text-gray-500 mb-4">
-                                                Wholesale from {{ $product->moq ?? 1 }} pcs — ₱{{ number_format($product->wholesale_price, 2) }} each
+                                        @if($product->discountTiers && $product->discountTiers->count() > 0)
+                                            <p class="text-[12px] text-green-700 font-semibold mb-4 flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                Bulk discount: Up to {{ number_format($product->discountTiers->max('discount_percent'), 0) }}% Off
                                             </p>
                                         @endif
 

@@ -88,8 +88,7 @@ class ProductController extends Controller
         $size = $request->input('size');
 
         $type = 'retail';
-        $user = auth()->user();
-        if ($user && $user->isBusiness() && $product->is_wholesale_enabled && $product->wholesale_price > 0) {
+        if ($product->is_wholesale_enabled && $product->wholesale_price > 0) {
             if (\App\Services\DiscountEngine::validateMoq($product, $quantity, 'wholesale')) {
                 $type = 'wholesale';
             }

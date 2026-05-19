@@ -288,7 +288,7 @@
             : '';
 
         const wholesaleNote = product.is_wholesale_enabled && product.wholesale_price > 0
-            ? `<p class="text-[12px] text-gray-500 mb-4">Wholesale from ${product.moq || 1} pcs — ₱${parseFloat(product.wholesale_price).toFixed(2)} each</p>`
+            ? `<p class="text-[12px] text-gray-500 mb-4">Wholesale from ${product.moq && product.moq > 0 ? product.moq : 5} pcs — ₱${parseFloat(product.wholesale_price).toFixed(2)} each</p>`
             : '';
 
         // Build size chips if product has sizes

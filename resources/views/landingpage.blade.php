@@ -195,8 +195,8 @@
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-2">
                                     <span id="price-display-{{ $product->id }}" data-base-price="{{ $product->retail_price }}" class="text-[20px] font-bold text-gray-900">₱{{ number_format($product->retail_price, 2) }}</span>
-                                    @if($product->wholesale_price && $product->wholesale_price < $product->retail_price)
-                                        <span class="text-[14px] text-gray-500 line-through">₱{{ number_format($product->wholesale_price, 2) }}</span>
+                                    @if($product->discountTiers && $product->discountTiers->count() > 0)
+                                        <span class="text-[11px] font-semibold text-green-700 uppercase tracking-wider">Bulk Savings Active</span>
                                     @endif
                                 </div>
                                 <div class="flex items-center">

@@ -34,9 +34,9 @@
                         <p class="text-[11px] text-gray-500">Qty: {{ $item->quantity }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-[13px] font-medium">${{ number_format($item->price * $item->quantity, 2) }}</p>
+                        <p class="text-[13px] font-semibold text-gray-900">₱{{ number_format($item->price * $item->quantity, 2) }}</p>
                         @if($item->discount_amount > 0)
-                            <p class="text-[11px] text-green-700">Saved ${{ number_format($item->discount_amount, 2) }}</p>
+                            <p class="text-[11px] text-green-700 font-medium">Saved ₱{{ number_format($item->discount_amount, 2) }}</p>
                         @endif
                     </div>
                 </div>
@@ -46,25 +46,25 @@
             <div class="mt-6 pt-6 border-t border-[#e8e5e0]">
                 <div class="flex justify-between text-[13px] mb-2">
                     <span class="text-gray-600">Subtotal</span>
-                    <span>${{ number_format($order->subtotal, 2) }}</span>
+                    <span class="font-medium text-gray-900">₱{{ number_format($order->subtotal, 2) }}</span>
                 </div>
                 @if($order->discount_total > 0)
                 <div class="flex justify-between text-[13px] mb-2">
                     <span class="text-green-700">Discounts</span>
-                    <span class="text-green-700">-${{ number_format($order->discount_total, 2) }}</span>
+                    <span class="text-green-700 font-medium">-₱{{ number_format($order->discount_total, 2) }}</span>
                 </div>
                 @endif
                 <div class="flex justify-between text-[13px] mb-2">
                     <span class="text-gray-600">Shipping</span>
-                    <span>${{ number_format($order->shipping_fee, 2) }}</span>
+                    <span class="font-medium text-gray-900">₱{{ number_format($order->shipping_fee, 2) }}</span>
                 </div>
                 <div class="flex justify-between text-[13px] mb-2">
                     <span class="text-gray-600">Platform Fee</span>
-                    <span>${{ number_format($order->platform_fee, 2) }}</span>
+                    <span class="font-medium text-gray-900">₱{{ number_format($order->platform_fee, 2) }}</span>
                 </div>
                 <div class="flex justify-between text-[18px] font-semibold text-gray-900 pt-3 border-t border-[#e8e5e0]">
                     <span>Total</span>
-                    <span>${{ number_format($order->total, 2) }}</span>
+                    <span class="text-gray-900">₱{{ number_format($order->total, 2) }}</span>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@
                 @foreach($order->payments as $payment)
                 <div class="flex justify-between text-[13px]">
                     <span class="text-gray-600">{{ ucfirst($payment->type) }} via {{ ucfirst($payment->method) }}</span>
-                    <span class="font-medium">${{ number_format(abs($payment->amount), 2) }}</span>
+                    <span class="font-medium text-gray-900">₱{{ number_format(abs($payment->amount), 2) }}</span>
                 </div>
                 @endforeach
             </div>

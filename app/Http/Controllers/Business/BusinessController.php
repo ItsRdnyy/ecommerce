@@ -148,7 +148,6 @@ class BusinessController extends Controller
             'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'retail_price' => 'required|numeric|min:0',
-            'wholesale_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'status' => 'required|in:active,inactive,flagged',
             'gender' => 'required|in:men,women,unisex',
@@ -157,6 +156,8 @@ class BusinessController extends Controller
             'bulk_min_quantity.*' => 'nullable|integer|min:1',
             'bulk_max_quantity' => 'array',
             'bulk_max_quantity.*' => 'nullable|integer|min:1',
+            'bulk_discount_percent' => 'array',
+            'bulk_discount_percent.*' => 'nullable|numeric|min:0|max:100',
             'sizes' => 'nullable|string|max:255',
             'sizes_stock' => 'nullable|array',
             'sizes_stock.*' => 'nullable|integer|min:0',
@@ -173,17 +174,30 @@ class BusinessController extends Controller
             'description' => $validated['description'] ?? '',
             'category_id' => $validated['category_id'],
             'retail_price' => $validated['retail_price'],
-            'wholesale_price' => $validated['wholesale_price'] ?? null,
+            'wholesale_price' => null,
+            'moq' => 5,
+            'is_wholesale_enabled' => 0,
             'stock' => $validated['stock'],
             'status' => $validated['status'],
             'gender' => $validated['gender'],
             'image' => $imagePath,
         ]);
 
-        // Save bulk pricing tiers
+        // Save bulk pricing tiers as active DiscountTiers and BulkPricing
         if ($request->has('bulk_min_quantity')) {
             foreach ($request->bulk_min_quantity as $key => $minQty) {
-                if (!empty($minQty)) {
+                $percent = $request->bulk_discount_percent[$key] ?? 0;
+                if (!empty($minQty) && $percent > 0) {
+                    // Create discount tier
+                    DiscountTier::create([
+                        'business_id' => auth()->id(),
+                        'product_id' => $product->id,
+                        'min_quantity' => $minQty,
+                        'max_quantity' => $request->bulk_max_quantity[$key] ?? null,
+                        'discount_percent' => $percent,
+                    ]);
+
+                    // Also save for legacy database structure compatibility
                     BulkPricing::create([
                         'product_id' => $product->id,
                         'min_quantity' => $minQty,
@@ -223,7 +237,7 @@ class BusinessController extends Controller
             abort(403);
         }
 
-        $product->load('variants');
+        $product->load(['variants', 'discountTiers']);
         $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values()->toArray();
         $product->sizes_string = implode(', ', $sizes);
         $product->variants = $product->variants->map(function($variant) {
@@ -249,7 +263,6 @@ class BusinessController extends Controller
             'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'retail_price' => 'required|numeric|min:0',
-            'wholesale_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'status' => 'required|in:active,inactive,flagged',
             'gender' => 'required|in:men,women,unisex',
@@ -259,6 +272,12 @@ class BusinessController extends Controller
             'sizes_stock.*' => 'nullable|integer|min:0',
             'sizes_price' => 'nullable|array',
             'sizes_price.*' => 'nullable|numeric|min:0',
+            'bulk_min_quantity' => 'nullable|array',
+            'bulk_min_quantity.*' => 'nullable|integer|min:1',
+            'bulk_max_quantity' => 'nullable|array',
+            'bulk_max_quantity.*' => 'nullable|integer|min:1',
+            'bulk_discount_percent' => 'nullable|array',
+            'bulk_discount_percent.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $updateData = [
@@ -266,7 +285,9 @@ class BusinessController extends Controller
             'description' => $validated['description'] ?? '',
             'category_id' => $validated['category_id'],
             'retail_price' => $validated['retail_price'],
-            'wholesale_price' => $validated['wholesale_price'] ?? null,
+            'wholesale_price' => null,
+            'moq' => 5,
+            'is_wholesale_enabled' => 0,
             'stock' => $validated['stock'],
             'status' => $validated['status'],
             'gender' => $validated['gender'],
@@ -278,6 +299,33 @@ class BusinessController extends Controller
         }
 
         $product->update($updateData);
+
+        // Update bulk pricing tiers as active DiscountTiers and BulkPricing
+        $product->discountTiers()->delete();
+        BulkPricing::where('product_id', $product->id)->delete();
+
+        if ($request->has('bulk_min_quantity')) {
+            foreach ($request->bulk_min_quantity as $key => $minQty) {
+                $percent = $request->bulk_discount_percent[$key] ?? 0;
+                if (!empty($minQty) && $percent > 0) {
+                    // Create discount tier
+                    DiscountTier::create([
+                        'business_id' => auth()->id(),
+                        'product_id' => $product->id,
+                        'min_quantity' => $minQty,
+                        'max_quantity' => $request->bulk_max_quantity[$key] ?? null,
+                        'discount_percent' => $percent,
+                    ]);
+
+                    // Also save for legacy database structure compatibility
+                    BulkPricing::create([
+                        'product_id' => $product->id,
+                        'min_quantity' => $minQty,
+                        'max_quantity' => $request->bulk_max_quantity[$key] ?? null,
+                    ]);
+                }
+            }
+        }
 
         if ($request->filled('sizes')) {
             $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));

@@ -70,9 +70,17 @@
                     <div class="flex justify-between text-[12px] py-3 border-b border-[#e8e5e0]">
                         <div>
                             <p class="font-medium text-gray-900">{{ $item->product->name }} x{{ $item->quantity }}</p>
-                            <p class="text-gray-500 text-[10px]">{{ $item->type }}</p>
+                            <p class="text-gray-500 text-[10px] uppercase tracking-wider">{{ $item->type }}</p>
+                            @if($item->discount_amount > 0)
+                                <p class="text-green-700 text-[10px] font-semibold">Quantity discount applied (-₱{{ number_format($item->discount_amount, 2) }})</p>
+                            @endif
                         </div>
-                        <p class="font-medium">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</p>
+                        <div class="text-right space-y-0.5">
+                            @if($item->discount_amount > 0)
+                                <p class="text-[10px] text-gray-400 line-through">₱{{ number_format(($item->unit_price * $item->quantity) + $item->discount_amount, 2) }}</p>
+                            @endif
+                            <p class="font-semibold text-gray-900">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</p>
+                        </div>
                     </div>
                     @endforeach
                     <div class="flex justify-between text-[13px] pt-3">

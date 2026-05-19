@@ -97,12 +97,20 @@
                             <div id="detail-total-display" class="text-[16px] text-gray-600 mt-1 hidden">
                                 Total: <span class="font-bold text-gray-900" id="detail-total-value">₱0.00</span>
                             </div>
-                            @if($product->is_wholesale_enabled && $product->wholesale_price > 0)
-                                <div class="mt-2" id="detail-wholesale-container">
-                                    <span class="text-[14px] text-gray-500 line-through">₱{{ number_format($product->wholesale_price, 2) }}</span>
-                                    <span class="text-[12px] text-gray-600 ml-2">Wholesale from {{ $product->moq ?? 1 }} pcs</span>
-                                </div>
-                            @endif
+
+
+                             @if($product->discountTiers && $product->discountTiers->count() > 0)
+                                 <div class="mt-3 space-y-1.5" id="detail-volume-discounts-container">
+                                     <p class="text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500">Volume Discounts</p>
+                                     <div class="flex flex-wrap gap-2">
+                                         @foreach($product->discountTiers as $tier)
+                                             <span class="inline-flex items-center px-2.5 py-1 rounded bg-green-50 border border-green-100 text-[12px] font-medium text-green-700">
+                                                 {{ $tier->min_quantity }}{{ $tier->max_quantity ? '-' . $tier->max_quantity : '+' }} pcs ➔ <span class="font-bold ml-1">{{ number_format($tier->discount_percent, 0) }}% Off</span>
+                                             </span>
+                                         @endforeach
+                                     </div>
+                                 </div>
+                             @endif
                         </div>
 
                         <!-- Stock Status -->

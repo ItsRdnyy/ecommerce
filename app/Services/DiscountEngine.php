@@ -19,22 +19,23 @@ class DiscountEngine
             }
         }
 
-        if ($type === 'wholesale' && $product->wholesale_price > 0) {
-            $basePrice = (float) $product->wholesale_price;
-        }
+        $retailBasePrice = $basePrice;
+
+        // Legacies wholesale_price calculations are retired. Pricing is strictly basePrice (retail) with tier discounts.
 
         $tier = self::findTier($product, $quantity);
         $discountRate = $tier ? ($tier->discount_percent / 100) : 0;
-        $discountAmount = $basePrice * $discountRate * $quantity;
         $finalUnitPrice = $basePrice * (1 - $discountRate);
         $total = $finalUnitPrice * $quantity;
+        
+        $discountAmount = ($retailBasePrice * $quantity) - $total;
 
         return [
-            'base_price' => $basePrice,
+            'base_price' => $retailBasePrice,
             'quantity' => $quantity,
             'tier' => $tier,
             'discount_rate' => $discountRate,
-            'discount_amount' => $discountAmount,
+            'discount_amount' => round($discountAmount, 2),
             'unit_price' => round($finalUnitPrice, 2),
             'total' => round($total, 2),
         ];
@@ -71,7 +72,8 @@ class DiscountEngine
     public static function validateMoq(Product $product, int $quantity, string $type = 'retail'): bool
     {
         if ($type === 'wholesale') {
-            return $quantity >= $product->moq;
+            $moq = ($product->moq !== null && $product->moq > 0) ? (int) $product->moq : 5;
+            return $quantity >= $moq;
         }
         return $quantity >= 1;
     }

@@ -63,16 +63,14 @@
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Retail Price (₱)</label>
                 <input type="number" name="retail_price" step="0.01" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
             </div>
-            <div>
-                <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Wholesale Price (₱)</label>
-                <input type="number" name="wholesale_price" step="0.01" min="0" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
-            </div>
+
             <div class="sm:col-span-2">
-                <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Bulk Pricing Tiers</label>
+                <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Bulk Pricing Tiers (Volume Discounts)</label>
                 <div id="bulk-pricing-container" class="space-y-3">
-                    <div class="bulk-pricing-row grid grid-cols-2 gap-3">
-                        <input type="number" name="bulk_min_quantity[]" placeholder="Min Qty (100)" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
-                        <input type="number" name="bulk_max_quantity[]" placeholder="Max Qty (200)" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
+                    <div class="bulk-pricing-row grid grid-cols-3 gap-3">
+                        <input type="number" name="bulk_min_quantity[]" placeholder="Min Qty (e.g. 5)" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
+                        <input type="number" name="bulk_max_quantity[]" placeholder="Max Qty (e.g. 9)" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
+                        <input type="number" name="bulk_discount_percent[]" placeholder="Discount %" min="0" max="100" step="0.01" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
                     </div>
                 </div>
                 <button type="button" onclick="addBulkPricingRow()" class="mt-3 text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">
@@ -318,10 +316,7 @@
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Retail Price (₱)</label>
                         <input type="number" id="edit_retail_price" name="retail_price" step="0.01" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                     </div>
-                    <div>
-                        <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Wholesale Price (₱)</label>
-                        <input type="number" id="edit_wholesale_price" name="wholesale_price" step="0.01" min="0" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
-                    </div>
+
                     <div>
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock</label>
                         <input type="number" id="edit_stock" name="stock" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
@@ -334,6 +329,15 @@
                             <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock and Price per Size</label>
                             <div id="edit_sizes_stock_inputs" class="space-y-2"></div>
                         </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Bulk Pricing Tiers (Volume Discounts)</label>
+                        <div id="edit-bulk-pricing-container" class="space-y-3">
+                            <!-- Dynamic rows will be inserted here via JS -->
+                        </div>
+                        <button type="button" onclick="addEditBulkPricingRow()" class="mt-3 text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">
+                            + Add Bulk Tier
+                        </button>
                     </div>
                     <div>
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Product Image</label>

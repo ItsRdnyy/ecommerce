@@ -65,10 +65,27 @@
                                 </button>
                             </div>
 
-                            <!-- Price -->
-                            <div class="flex items-center justify-between">
-                                <p class="text-[18px] font-semibold text-gray-900 item-total" data-item-id="{{ $item->id }}">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</p>
-                                <p class="text-[12px] text-gray-500"><span class="item-unit-price" data-item-id="{{ $item->id }}">₱{{ number_format($item->unit_price, 2) }}</span> each</p>
+                            <!-- Price & Savings -->
+                            <div class="flex items-center justify-between mt-3 pt-3 border-t border-dashed border-[#e8e5e0]">
+                                <div class="space-y-1">
+                                    <div class="flex items-baseline gap-2">
+                                        <span class="text-[18px] font-semibold text-gray-900 item-total" data-item-id="{{ $item->id }}">₱{{ number_format($item->unit_price * $item->quantity, 2) }}</span>
+                                        <span class="text-[13px] text-gray-400 line-through item-original-total {{ $item->discount_amount > 0 ? '' : 'hidden' }}" data-item-id="{{ $item->id }}">
+                                            ₱{{ number_format(($item->unit_price * $item->quantity) + $item->discount_amount, 2) }}
+                                        </span>
+                                    </div>
+                                    <p class="text-[12px] font-medium text-green-700 item-savings {{ $item->discount_amount > 0 ? '' : 'hidden' }}" data-item-id="{{ $item->id }}">
+                                        Saved ₱{{ number_format($item->discount_amount, 2) }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[12px] text-gray-500">
+                                        <span class="item-unit-price font-medium text-gray-900" data-item-id="{{ $item->id }}">₱{{ number_format($item->unit_price, 2) }}</span> each
+                                    </div>
+                                    <div class="text-[11px] text-gray-400 line-through item-original-unit-price {{ $item->discount_amount > 0 ? '' : 'hidden' }}" data-item-id="{{ $item->id }}">
+                                        ₱{{ number_format($item->unit_price + ($item->discount_amount / $item->quantity), 2) }} each
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -274,10 +291,38 @@
             const data = await response.json();
             if (data.success) {
                 updateCartCountDisplay(data.cart_count);
-                const itemTotal = document.querySelector(`.cart-item[data-item-id="${itemId}"] .item-total`);
+                
+                // Update net total and net unit price
+                const itemTotal = document.querySelector(`.item-total[data-item-id="${itemId}"]`);
                 if (itemTotal) itemTotal.textContent = '₱' + data.item_total;
+                
                 const itemUnit = document.querySelector(`.item-unit-price[data-item-id="${itemId}"]`);
                 if (itemUnit && data.item_unit_price) itemUnit.textContent = '₱' + data.item_unit_price;
+                
+                // Update original prices and savings
+                const origTotal = document.querySelector(`.item-original-total[data-item-id="${itemId}"]`);
+                const savings = document.querySelector(`.item-savings[data-item-id="${itemId}"]`);
+                const origUnit = document.querySelector(`.item-original-unit-price[data-item-id="${itemId}"]`);
+                
+                if (data.has_discount) {
+                    if (origTotal) {
+                        origTotal.textContent = '₱' + data.original_total;
+                        origTotal.classList.remove('hidden');
+                    }
+                    if (savings) {
+                        savings.textContent = 'Saved ₱' + data.discount_amount;
+                        savings.classList.remove('hidden');
+                    }
+                    if (origUnit) {
+                        origUnit.textContent = '₱' + data.original_unit_price + ' each';
+                        origUnit.classList.remove('hidden');
+                    }
+                } else {
+                    if (origTotal) origTotal.classList.add('hidden');
+                    if (savings) savings.classList.add('hidden');
+                    if (origUnit) origUnit.classList.add('hidden');
+                }
+                
                 updateSummary(data.summary);
             } else {
                 window.Layout.showNotification(data.message, 'error');

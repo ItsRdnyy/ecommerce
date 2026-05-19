@@ -144,12 +144,17 @@ class CartController extends Controller
         $item->cart->recalculate();
 
         if ($request->expectsJson()) {
+            $basePrice = $item->unit_price + ($item->discount_amount / $item->quantity);
             return response()->json([
                 'success' => true,
                 'message' => 'Cart updated successfully',
                 'cart_count' => $item->cart->items->sum('quantity'),
                 'item_total' => number_format($item->quantity * $item->unit_price, 2),
                 'item_unit_price' => number_format($item->unit_price, 2),
+                'discount_amount' => number_format($item->discount_amount, 2),
+                'original_unit_price' => number_format($basePrice, 2),
+                'original_total' => number_format($basePrice * $item->quantity, 2),
+                'has_discount' => $item->discount_amount > 0,
                 'summary' => [
                     'subtotal' => number_format($item->cart->total + $item->cart->discount_total, 2),
                     'discount_total' => number_format($item->cart->discount_total, 2),
@@ -165,9 +170,7 @@ class CartController extends Controller
 
     private function resolveCartItemType(Product $product, int $quantity): string
     {
-        $user = auth()->user();
-
-        if ($user && $user->isBusiness() && $product->is_wholesale_enabled && $product->wholesale_price > 0) {
+        if ($product->is_wholesale_enabled && $product->wholesale_price > 0) {
             if (DiscountEngine::validateMoq($product, $quantity, 'wholesale')) {
                 return 'wholesale';
             }
