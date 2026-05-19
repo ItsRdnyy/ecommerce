@@ -9,6 +9,53 @@ function addBulkPricingRow() {
     container.appendChild(newRow);
 }
 
+function getCategoryType(selectElement) {
+    const selected = selectElement.options[selectElement.selectedIndex];
+    if (!selected) return null;
+    if (selected.getAttribute('data-is-apparel') === 'true') return 'apparel';
+    if (selected.getAttribute('data-is-shoe') === 'true') return 'shoe';
+    return null;
+}
+
+function toggleSizesField(selectEl, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const type = getCategoryType(selectEl);
+    const input = container.querySelector('input[name="sizes"]');
+    if (type === 'apparel') {
+        container.classList.remove('hidden');
+        if (input) input.placeholder = 'e.g. S, M, L, XL';
+    } else if (type === 'shoe') {
+        container.classList.remove('hidden');
+        if (input) {
+            input.placeholder = 'e.g. 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48';
+            if (!input.value) {
+                input.value = '38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48';
+            }
+        }
+    } else {
+        container.classList.add('hidden');
+        if (input) input.value = '';
+    }
+}
+
+// Init create form category listener
+document.addEventListener('DOMContentLoaded', function () {
+    const createCategorySelect = document.getElementById('create_category_id');
+    if (createCategorySelect) {
+        createCategorySelect.addEventListener('change', function () {
+            toggleSizesField(this, 'create_sizes_container');
+        });
+    }
+
+    const editCategorySelect = document.getElementById('edit_category_id');
+    if (editCategorySelect) {
+        editCategorySelect.addEventListener('change', function () {
+            toggleSizesField(this, 'edit_sizes_container');
+        });
+    }
+});
+
 function openEditModal(productId) {
     console.log('Opening edit modal for product:', productId);
     
@@ -26,14 +73,26 @@ function openEditModal(productId) {
             document.getElementById('editProductId').value = data.id;
             document.getElementById('edit_name').value = data.name;
             document.getElementById('edit_description').value = data.description || '';
-            document.getElementById('edit_category_id').value = data.category_id;
             document.getElementById('edit_status').value = data.status;
             document.getElementById('edit_gender').value = data.gender;
             document.getElementById('edit_retail_price').value = data.retail_price;
             document.getElementById('edit_wholesale_price').value = data.wholesale_price || '';
             document.getElementById('edit_stock').value = data.stock;
+
+            // Set category and toggle sizes field
+            const editCategorySelect = document.getElementById('edit_category_id');
+            if (editCategorySelect) {
+                editCategorySelect.value = data.category_id;
+                toggleSizesField(editCategorySelect, 'edit_sizes_container');
+            }
+
+            // Populate sizes if apparel
+            const editSizes = document.getElementById('edit_sizes');
+            if (editSizes) {
+                editSizes.value = data.sizes_string || '';
+            }
+
             document.getElementById('editForm').action = `/business/products/${data.id}`;
-            
             document.getElementById('editModal').classList.remove('hidden');
         })
         .catch(error => {

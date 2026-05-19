@@ -126,6 +126,39 @@
                             </p>
                         </div>
 
+                        <!-- Available Sizes -->
+                        @php
+                            $categoryName = strtolower($product->category->name ?? '');
+                            $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                            $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+                            if ($isShoe) {
+                                $sizes = collect(range(38, 48));
+                            } elseif ($isApparel && $product->variants) {
+                                $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values();
+                            } else {
+                                $sizes = collect();
+                            }
+                            $requiresSize = $sizes->isNotEmpty();
+                        @endphp
+                        @if($requiresSize)
+                        <div class="mb-8" id="sizes-section">
+                            <h2 class="text-[16px] font-semibold text-gray-900 mb-3">
+                                Select Size <span class="text-red-500">*</span>
+                            </h2>
+                            <div class="flex flex-wrap gap-2" id="detail-sizes-container">
+                                @foreach($sizes as $size)
+                                <button type="button"
+                                    onclick="selectDetailSize('{{ $size }}', this)"
+                                    class="detail-size-btn px-4 py-2 text-[13px] font-medium border border-gray-300 rounded hover:border-gray-900 transition-colors text-gray-700">
+                                    {{ $size }}
+                                </button>
+                                @endforeach
+                            </div>
+                            <input type="hidden" id="detail-selected-size" value="">
+                            <p class="text-[12px] text-red-500 mt-2 hidden" id="detail-size-error">Please select a size before proceeding.</p>
+                        </div>
+                        @endif
+
                         <!-- Quantity and Add to Cart -->
                         @auth
                             <div class="mt-auto">
@@ -183,3 +216,23 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+function selectDetailSize(size, btn) {
+    // Deselect all
+    document.querySelectorAll('.detail-size-btn').forEach(b => {
+        b.classList.remove('bg-gray-900', 'text-white', 'border-gray-900');
+        b.classList.add('border-gray-300', 'text-gray-700');
+    });
+    // Highlight selected
+    btn.classList.remove('border-gray-300', 'text-gray-700');
+    btn.classList.add('bg-gray-900', 'text-white', 'border-gray-900');
+    // Store value
+    document.getElementById('detail-selected-size').value = size;
+    // Hide error
+    const err = document.getElementById('detail-size-error');
+    if (err) err.classList.add('hidden');
+}
+</script>
+@endpush

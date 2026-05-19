@@ -82,8 +82,27 @@
 
                 const productId = this.dataset.productId;
                 const productName = this.dataset.productName;
+                const quantitySelector = this.dataset.quantitySelector;
                 const btnText = this.querySelector('.btn-text');
                 const btnLoading = this.querySelector('.btn-loading');
+
+                // Check for size selection on product detail page
+                const sizeInput = document.getElementById('detail-selected-size');
+                const sizeError = document.getElementById('detail-size-error');
+                if (sizeInput !== null && sizeInput.value === '') {
+                    if (sizeError) sizeError.classList.remove('hidden');
+                    showNotification('Please select a size', 'error');
+                    return;
+                }
+
+                // Get quantity if selector exists
+                let quantity = 1;
+                if (quantitySelector) {
+                    const qtyInput = document.getElementById(quantitySelector);
+                    if (qtyInput) {
+                        quantity = parseInt(qtyInput.value) || 1;
+                    }
+                }
 
                 // Show loading state
                 if (btnText) btnText.classList.add('hidden');
@@ -91,6 +110,16 @@
                 this.disabled = true;
 
                 try {
+                    const payload = {
+                        product_id: productId,
+                        quantity: quantity
+                    };
+
+                    // Include size if selected
+                    if (sizeInput && sizeInput.value) {
+                        payload.size = sizeInput.value;
+                    }
+
                     const response = await fetch(appState.cartAddUrl, {
                         method: 'POST',
                         headers: {
@@ -99,10 +128,7 @@
                             'X-Requested-With': 'XMLHttpRequest',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         },
-                        body: JSON.stringify({
-                            product_id: productId,
-                            quantity: 1
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     const data = await response.json();

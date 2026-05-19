@@ -287,6 +287,33 @@
             ? `<p class="text-[12px] text-gray-500 mb-4">Wholesale from ${product.moq || 1} pcs — ₱${parseFloat(product.wholesale_price).toFixed(2)} each</p>`
             : '';
 
+        // Build size chips if product has sizes
+        const catName = (product.category_name || '').toLowerCase();
+        const isShoe = ['shoe','footwear','sneaker','boot'].some(k => catName.includes(k));
+        const isApparel = ['clothing','shirt','pants','dress','apparel'].some(k => catName.includes(k));
+        let sizesHtml = '';
+        if (isShoe || isApparel) {
+            const sizeList = isShoe
+                ? [38,39,40,41,42,43,44,45,46,47,48]
+                : (product.sizes || []);
+            if (sizeList.length > 0) {
+                const chips = sizeList.map(s =>
+                    `<button type="button"
+                        onclick="window.ProductsPage.selectSize(${product.id}, '${s}', this)"
+                        class="size-btn px-3 py-1.5 text-[12px] font-medium border border-gray-300 rounded text-gray-700 hover:border-gray-900 transition-colors">
+                        ${s}
+                    </button>`
+                ).join('');
+                sizesHtml = `
+                    <div class="mb-4">
+                        <p class="text-[11px] text-gray-500 mb-1">Size <span class="text-red-500">*</span></p>
+                        <div class="flex flex-wrap gap-1.5" id="sizes-${product.id}">${chips}</div>
+                        <input type="hidden" id="selected-size-${product.id}" value="">
+                        <p class="text-[10px] text-red-500 mt-1 hidden" id="size-error-${product.id}">Please select a size.</p>
+                    </div>`;
+            }
+        }
+
         const buttons = product.stock > 0
             ? appState.isAuthenticated
                 ? `
@@ -342,6 +369,7 @@
                         </span>
                     </div>
                     ${wholesaleNote}
+                    ${sizesHtml}
                     <div class="space-y-3">
                         <div class="flex items-center justify-center gap-2">
                             <button onclick="window.ProductsPage.decrementQuantity(${product.id})"
@@ -418,6 +446,29 @@
     }
 
     /**
+     * Select a size chip — highlights selected, stores value
+     */
+    function selectSize(productId, size, btn) {
+        // Deselect all chips for this product
+        const container = document.getElementById(`sizes-${productId}`);
+        if (container) {
+            container.querySelectorAll('.size-btn').forEach(b => {
+                b.classList.remove('bg-gray-900', 'text-white', 'border-gray-900');
+                b.classList.add('border-gray-300', 'text-gray-700');
+            });
+        }
+        // Highlight selected chip
+        btn.classList.remove('border-gray-300', 'text-gray-700');
+        btn.classList.add('bg-gray-900', 'text-white', 'border-gray-900');
+        // Store value
+        const hidden = document.getElementById(`selected-size-${productId}`);
+        if (hidden) hidden.value = size;
+        // Hide error if shown
+        const err = document.getElementById(`size-error-${productId}`);
+        if (err) err.classList.add('hidden');
+    }
+
+    /**
      * Add product to cart
      */
     async function addToCart(productId) {
@@ -429,13 +480,26 @@
             return;
         }
 
+        // Validate size if required
+        const sizeInput = document.getElementById(`selected-size-${productId}`);
+        const sizeError = document.getElementById(`size-error-${productId}`);
+        if (sizeInput !== null && sizeInput.value === '') {
+            if (sizeError) sizeError.classList.remove('hidden');
+            showNotification('Please select a size first', 'error');
+            return;
+        }
+
         const qty = parseInt(quantity.value);
+        const selectedSize = sizeInput ? sizeInput.value : null;
         const originalContent = button.innerHTML;
 
         button.innerHTML = 'Adding...';
         button.disabled = true;
 
         try {
+            const payload = { product_id: productId, quantity: qty };
+            if (selectedSize) payload.size = selectedSize;
+
             const response = await fetch(appState.cartAddUrl, {
                 method: 'POST',
                 headers: {
@@ -444,10 +508,7 @@
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
-                body: JSON.stringify({
-                    product_id: productId,
-                    quantity: qty
-                })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
@@ -477,9 +538,22 @@
             return;
         }
 
+        // Validate size if required
+        const sizeInput = document.getElementById(`selected-size-${productId}`);
+        const sizeError = document.getElementById(`size-error-${productId}`);
+        if (sizeInput !== null && sizeInput.value === '') {
+            if (sizeError) sizeError.classList.remove('hidden');
+            showNotification('Please select a size first', 'error');
+            return;
+        }
+
         const qty = parseInt(quantity.value);
+        const selectedSize = sizeInput ? sizeInput.value : null;
 
         try {
+            const payload = { product_id: productId, quantity: qty };
+            if (selectedSize) payload.size = selectedSize;
+
             const response = await fetch(appState.cartAddUrl, {
                 method: 'POST',
                 headers: {
@@ -488,10 +562,7 @@
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
-                body: JSON.stringify({
-                    product_id: productId,
-                    quantity: qty
-                })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
@@ -549,7 +620,8 @@
         incrementQuantity,
         decrementQuantity,
         addToCart,
-        buyNow
+        buyNow,
+        selectSize
     };
 
 })();

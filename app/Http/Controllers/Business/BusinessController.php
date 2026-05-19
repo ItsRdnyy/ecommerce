@@ -101,7 +101,7 @@ class BusinessController extends Controller
         $businessId = auth()->id();
         $query = Product::where('business_id', $businessId)
             ->whereIn('status', ['active', 'flagged'])
-            ->with('category');
+            ->with(['category', 'variants']);
             
         // Filter by category if selected
         if ($request->filled('category')) {
@@ -118,7 +118,7 @@ class BusinessController extends Controller
         $businessId = auth()->id();
         $query = Product::where('business_id', $businessId)
             ->whereIn('status', ['active', 'flagged'])
-            ->with('category');
+            ->with(['category', 'variants']);
 
         // Filter by category if selected
         if ($request->filled('category')) {
@@ -157,6 +157,7 @@ class BusinessController extends Controller
             'bulk_min_quantity.*' => 'nullable|integer|min:1',
             'bulk_max_quantity' => 'array',
             'bulk_max_quantity.*' => 'nullable|integer|min:1',
+            'sizes' => 'nullable|string|max:255',
         ]);
 
         $imagePath = null;
@@ -190,6 +191,20 @@ class BusinessController extends Controller
             }
         }
 
+        // Create variants for sizes if provided
+        if ($request->filled('sizes')) {
+            $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));
+            foreach ($sizes as $size) {
+                if (!empty($size)) {
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'name' => $product->name . ' - ' . $size,
+                        'attributes' => ['size' => $size],
+                    ]);
+                }
+            }
+        }
+
         return redirect()->route('business.products')->with('success', 'Product created successfully.');
     }
 
@@ -198,6 +213,10 @@ class BusinessController extends Controller
         if ($product->business_id !== auth()->id()) {
             abort(403);
         }
+
+        $product->load('variants');
+        $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values()->toArray();
+        $product->sizes_string = implode(', ', $sizes);
 
         return response()->json($product);
     }
@@ -218,6 +237,7 @@ class BusinessController extends Controller
             'status' => 'required|in:active,inactive,flagged',
             'gender' => 'required|in:men,women,unisex',
             'image' => 'nullable|file|max:10240',
+            'sizes' => 'nullable|string|max:255',
         ]);
 
         $updateData = [
@@ -237,6 +257,22 @@ class BusinessController extends Controller
         }
 
         $product->update($updateData);
+
+        if ($request->filled('sizes')) {
+            $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));
+            $existingSizes = $product->variants()->get()->map(fn($v) => $v->attributes['size'] ?? null)->filter()->values()->toArray();
+
+            $newSizes = array_diff($sizes, $existingSizes);
+            foreach ($newSizes as $size) {
+                if (!empty($size)) {
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'name' => $product->name . ' - ' . $size,
+                        'attributes' => ['size' => $size],
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('business.products')->with('success', 'Product updated successfully.');
     }

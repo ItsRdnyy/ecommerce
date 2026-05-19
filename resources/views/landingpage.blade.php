@@ -137,6 +137,37 @@
                                 </span>
                             </div>
                             <h3 class="text-[16px] font-semibold text-gray-900 mb-2 line-clamp-2">{{ $product->name }}</h3>
+
+                            <!-- Available Sizes -->
+                            @php
+                                $catName = strtolower($product->category->name ?? '');
+                                $isApparelLP = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
+                                $isShoeLP = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
+                                if ($isShoeLP) {
+                                    $lpSizes = collect(range(38, 48));
+                                } elseif ($isApparelLP && $product->variants) {
+                                    $lpSizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values();
+                                } else {
+                                    $lpSizes = collect();
+                                }
+                            @endphp
+                            @if($lpSizes->isNotEmpty())
+                            <div class="mb-3">
+                                <p class="text-[11px] text-gray-500 mb-1">Size <span class="text-red-500">*</span></p>
+                                <div class="flex flex-wrap gap-1" id="sizes-{{ $product->id }}">
+                                    @foreach($lpSizes as $size)
+                                    <button type="button"
+                                            onclick="LandingPage.selectSize({{ $product->id }}, '{{ $size }}', this)"
+                                            class="size-btn inline-flex items-center px-2 py-1 text-[11px] font-medium border border-gray-200 rounded text-gray-600 bg-gray-50 hover:border-gray-900 transition-colors">
+                                        {{ $size }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                                <input type="hidden" id="selected-size-{{ $product->id }}" value="">
+                                <p class="text-[10px] text-red-500 mt-1 hidden" id="size-error-{{ $product->id }}">Please select a size.</p>
+                            </div>
+                            @endif
+
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-2">
                                     <span class="text-[20px] font-bold text-gray-900">₱{{ number_format($product->retail_price, 2) }}</span>
@@ -152,9 +183,9 @@
                                 </div>
                             </div>
                             <div class="flex gap-3">
-                                <button class="add-to-cart-btn flex-1 btn-primary text-[10px] py-2.5 {{ $product->stock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}" 
-                                        data-product-id="{{ $product->id }}"
-                                        data-product-name="{{ $product->name }}"
+                                <button onclick="LandingPage.addToCart({{ $product->id }})"
+                                        id="add-to-cart-{{ $product->id }}"
+                                        class="add-to-cart-btn flex-1 btn-primary text-[10px] py-2.5 {{ $product->stock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
                                         {{ $product->stock == 0 ? 'disabled' : '' }}>
                                     <span class="btn-text">{{ $product->stock == 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
                                     <span class="btn-loading hidden">
@@ -324,4 +355,8 @@
         </div>
     </footer>
 
-@endsection 
+@endsection
+
+@push('scripts')
+<script src="{{ asset('js/landingpage.js') }}" defer></script>
+@endpush 

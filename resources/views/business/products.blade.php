@@ -32,9 +32,14 @@
             </div>
             <div>
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Category</label>
-                <select name="category_id" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                <select name="category_id" id="create_category_id" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                    <option value="" disabled selected>Select Category</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        <option value="{{ $category->id }}"
+                                data-is-apparel="{{ str_contains(strtolower($category->name), 'clothing') || str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
+                                data-is-shoe="{{ str_contains(strtolower($category->name), 'shoe') || str_contains(strtolower($category->name), 'footwear') || str_contains(strtolower($category->name), 'sneaker') || str_contains(strtolower($category->name), 'boot') ? 'true' : 'false' }}">
+                            {{ $category->name }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -77,6 +82,11 @@
             <div>
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock</label>
                 <input type="number" name="stock" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+            </div>
+            <div id="create_sizes_container" class="hidden">
+                <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Available Sizes (Comma Separated)</label>
+                <input type="text" id="create_sizes" name="sizes" placeholder="e.g. S, M, L, XL" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                <p class="text-[10px] text-gray-500 mt-1">This will automatically create variants for each size.</p>
             </div>
             <div class="sm:col-span-2">
                 <button type="submit" class="px-6 py-2.5 bg-[#111] text-white text-[12px] font-semibold tracking-[0.1em] uppercase rounded hover:bg-gray-800 transition-colors">Add Product</button>
@@ -174,6 +184,33 @@
                             <p class="text-[14px] font-medium {{ $product->stock == 0 ? 'text-red-600' : 'text-gray-600' }}">{{ $product->stock }} units</p>
                         </div>
                         
+                        <!-- Sizes (Apparel & Shoes) -->
+                        @php
+                            $categoryName = strtolower($product->category->name ?? '');
+                            $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                            $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+                            $showSizes = $isApparel || $isShoe;
+                            if ($isShoe) {
+                                $sizes = collect(range(38, 48));
+                            } elseif ($isApparel && $product->variants) {
+                                $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values();
+                            } else {
+                                $sizes = collect();
+                            }
+                        @endphp
+                        @if($showSizes && $sizes->isNotEmpty())
+                        <div class="mb-3">
+                            <p class="text-[11px] text-gray-500 mb-1">Available Sizes</p>
+                            <div class="flex flex-wrap gap-1">
+                                @foreach($sizes as $size)
+                                <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium border border-gray-200 rounded text-gray-600 bg-gray-50">
+                                    {{ $size }}
+                                </span>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                        
                         <!-- Discount Tiers -->
                         @if(($product->discountTiers ?? collect())->count() > 0)
                         <div class="mb-4">
@@ -242,7 +279,11 @@
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Category</label>
                         <select id="edit_category_id" name="category_id" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                             @foreach($categories as $category)
-                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                <option value="{{ $category->id }}"
+                                        data-is-apparel="{{ str_contains(strtolower($category->name), 'clothing') || str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
+                                        data-is-shoe="{{ str_contains(strtolower($category->name), 'shoe') || str_contains(strtolower($category->name), 'footwear') || str_contains(strtolower($category->name), 'sneaker') || str_contains(strtolower($category->name), 'boot') ? 'true' : 'false' }}">
+                                    {{ $category->name }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -273,6 +314,11 @@
                     <div>
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock</label>
                         <input type="number" id="edit_stock" name="stock" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                    </div>
+                    <div id="edit_sizes_container" class="hidden">
+                        <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Available Sizes (Comma Separated)</label>
+                        <input type="text" id="edit_sizes" name="sizes" placeholder="e.g. S, M, L, XL" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                        <p class="text-[10px] text-gray-500 mt-1">This will automatically create variants for each size.</p>
                     </div>
                     <div>
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Product Image</label>

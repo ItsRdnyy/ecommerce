@@ -59,6 +59,27 @@
                     <p class="text-[14px] font-medium {{ $product->stock == 0 ? 'text-red-600' : 'text-gray-600' }}">{{ $product->stock }} units</p>
                 </div>
                 
+                <!-- Sizes (Apparel & Shoes) -->
+                @php
+                    $categoryName = strtolower($product->category->name ?? '');
+                    $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                    $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+                    $showSizes = $isApparel || $isShoe;
+                    $sizes = ($showSizes && $product->variants) ? $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values() : collect();
+                @endphp
+                @if($showSizes && $sizes->isNotEmpty())
+                <div class="mb-3">
+                    <p class="text-[11px] text-gray-500 mb-1">Available Sizes</p>
+                    <div class="flex flex-wrap gap-1">
+                        @foreach($sizes as $size)
+                        <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium border border-gray-200 rounded text-gray-600 bg-gray-50">
+                            {{ $size }}
+                        </span>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+                
                 <!-- Discount Tiers -->
                 @if(($product->discountTiers ?? collect())->count() > 0)
                 <div class="mb-4">

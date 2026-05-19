@@ -25,10 +25,21 @@ class CartController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1|max:99',
+            'size' => 'nullable|string|max:10',
         ]);
 
-        $product = Product::findOrFail($request->product_id);
+        $product = Product::with('category')->findOrFail($request->product_id);
         $quantity = (int) $request->quantity;
+        $size = $request->size;
+
+        // Determine if size is required based on category
+        $categoryName = strtolower($product->category->name ?? '');
+        $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+        $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+
+        if (($isApparel || $isShoe) && empty($size)) {
+            return $this->jsonOrRedirect($request, 'Please select a size.', false, 422);
+        }
 
         // Check if product is in stock
         if ($product->stock < $quantity) {
@@ -43,10 +54,17 @@ class CartController extends Controller
 
         $cart = $this->getOrCreateCart();
 
-        // Check if product already exists in cart
-        $existing = CartItem::where('cart_id', $cart->id)
-            ->where('product_id', $product->id)
-            ->first();
+        // Check if product with the same size already exists in cart
+        $existingQuery = CartItem::where('cart_id', $cart->id)
+            ->where('product_id', $product->id);
+
+        if ($size) {
+            $existingQuery->where('size', $size);
+        } else {
+            $existingQuery->whereNull('size');
+        }
+
+        $existing = $existingQuery->first();
 
         if ($existing) {
             $newQuantity = $existing->quantity + $quantity;
@@ -56,12 +74,16 @@ class CartController extends Controller
             }
 
             $itemType = $this->resolveCartItemType($product, $newQuantity);
-            $existing->update($this->cartItemPayload($product, $newQuantity, $itemType));
+            $existing->update(array_merge(
+                $this->cartItemPayload($product, $newQuantity, $itemType),
+                ['size' => $size]
+            ));
         } else {
             $itemType = $this->resolveCartItemType($product, $quantity);
             CartItem::create(array_merge([
                 'cart_id' => $cart->id,
                 'product_id' => $product->id,
+                'size' => $size,
             ], $this->cartItemPayload($product, $quantity, $itemType)));
         }
 

@@ -34,6 +34,9 @@
                         <div class="flex-1">
                             <h3 class="text-[16px] font-semibold text-gray-900 mb-2">{{ $item->product->name }}</h3>
                             <p class="text-[14px] text-gray-600 mb-1">{{ $item->product->category->name ?? 'Uncategorized' }}</p>
+                            @if($item->size)
+                            <p class="text-[13px] text-gray-700 mb-1"><span class="font-medium">Size:</span> {{ $item->size }}</p>
+                            @endif
                             <p class="text-[12px] uppercase tracking-[0.12em] text-gray-500 mb-3">{{ $item->type === 'wholesale' ? 'Wholesale purchase' : 'Retail purchase' }}</p>
                             
                             <!-- Quantity Selector -->

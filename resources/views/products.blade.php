@@ -166,6 +166,37 @@
                                             </p>
                                         @endif
 
+                                        <!-- Sizes (Apparel & Shoes) -->
+                                        @php
+                                            $categoryName = strtolower($product->category->name ?? '');
+                                            $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                                            $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+                                            $showSizes = $isApparel || $isShoe;
+                                            if ($isShoe) {
+                                                $sizes = collect(range(38, 48));
+                                            } elseif ($isApparel && $product->variants) {
+                                                $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values();
+                                            } else {
+                                                $sizes = collect();
+                                            }
+                                        @endphp
+                                        @if($showSizes && $sizes->isNotEmpty())
+                                        <div class="mb-4">
+                                            <p class="text-[11px] text-gray-500 mb-1">Size <span class="text-red-500">*</span></p>
+                                            <div class="flex flex-wrap gap-1.5" id="sizes-{{ $product->id }}">
+                                                @foreach($sizes as $size)
+                                                <button type="button"
+                                                    onclick="window.ProductsPage.selectSize({{ $product->id }}, '{{ $size }}', this)"
+                                                    class="size-btn px-3 py-1.5 text-[12px] font-medium border border-gray-300 rounded text-gray-700 hover:border-gray-900 transition-colors">
+                                                    {{ $size }}
+                                                </button>
+                                                @endforeach
+                                            </div>
+                                            <input type="hidden" id="selected-size-{{ $product->id }}" value="">
+                                            <p class="text-[10px] text-red-500 mt-1 hidden" id="size-error-{{ $product->id }}">Please select a size.</p>
+                                        </div>
+                                        @endif
+
                                         <!-- Quantity Selector and Actions -->
                                         <div class="space-y-3">
                                             <!-- Quantity Selector -->
