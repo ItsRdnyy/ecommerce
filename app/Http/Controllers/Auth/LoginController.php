@@ -41,11 +41,24 @@ class LoginController extends Controller
         }
 
         if ($user && $validPassword) {
-            // Check if user is active (admins are always active)
-            if (!$user->isAdmin() && $user->status !== \App\Models\User::STATUS_ACTIVE) {
-                return back()->withErrors([
-                    'email' => 'Your account is ' . $user->status . '. Please wait for admin approval.',
-                ])->onlyInput('email', 'redirect');
+            // Check user status
+            if (!$user->isAdmin()) {
+                if ($user->status === \App\Models\User::STATUS_PENDING) {
+                    return back()->withErrors([
+                        'email' => 'Your account is pending admin approval.',
+                    ])->onlyInput('email', 'redirect');
+                }
+
+                if ($user->status === \App\Models\User::STATUS_APPROVED) {
+                    return redirect()->route('verify.show', ['email' => $user->email])
+                        ->with('info', 'Your account has been approved by admin. Please enter the verification code to activate it.');
+                }
+
+                if ($user->status !== \App\Models\User::STATUS_ACTIVE) {
+                    return back()->withErrors([
+                        'email' => 'Your account is ' . $user->status . '.',
+                    ])->onlyInput('email', 'redirect');
+                }
             }
 
             if ($isPlainPassword) {

@@ -163,8 +163,29 @@ class AdminController extends Controller
 
     public function approveUser(User $user)
     {
-        $user->update(['status' => User::STATUS_ACTIVE]);
-        return back()->with('success', 'User account activated successfully.');
+        $code = sprintf("%06d", mt_rand(100000, 999999));
+        $user->update([
+            'status' => User::STATUS_APPROVED,
+            'verification_code' => $code,
+        ]);
+
+        \App\Services\NotificationService::notify(
+            $user,
+            'account_approval',
+            'Account Approved',
+            "Your account has been approved by admin. Please enter this verification code to activate your account: {$code}",
+            ['verification_code' => $code]
+        );
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\AccountApprovedMail($user, $code));
+        } catch (\Exception $e) {
+            \Log::error("Failed to send approval email to {$user->email}: " . $e->getMessage());
+        }
+
+        \Log::info("Verification code generated for {$user->email}: {$code}");
+
+        return back()->with('success', 'User account approved. Verification code generated: ' . $code);
     }
 
     public function rejectUser(User $user)
