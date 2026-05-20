@@ -24,7 +24,7 @@ class OrderStatusWorkflowTest extends TestCase
         $this->admin = User::create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
-            'password' => Hash::make('password123'),
+            'password' => 'password123',
             'role' => User::ROLE_ADMIN,
             'status' => User::STATUS_ACTIVE,
         ]);
@@ -32,7 +32,7 @@ class OrderStatusWorkflowTest extends TestCase
         $this->business = User::create([
             'name' => 'Business User',
             'email' => 'business@example.com',
-            'password' => Hash::make('password123'),
+            'password' => 'password123',
             'role' => User::ROLE_BUSINESS,
             'status' => User::STATUS_ACTIVE,
         ]);
@@ -40,7 +40,7 @@ class OrderStatusWorkflowTest extends TestCase
         $this->buyer = User::create([
             'name' => 'Buyer User',
             'email' => 'buyer@example.com',
-            'password' => Hash::make('password123'),
+            'password' => 'password123',
             'role' => User::ROLE_BUYER,
             'status' => User::STATUS_ACTIVE,
         ]);
@@ -51,7 +51,7 @@ class OrderStatusWorkflowTest extends TestCase
         $otherBusiness = User::create([
             'name' => 'Other Business',
             'email' => 'other@example.com',
-            'password' => Hash::make('password123'),
+            'password' => 'password123',
             'role' => User::ROLE_BUSINESS,
             'status' => User::STATUS_ACTIVE,
         ]);

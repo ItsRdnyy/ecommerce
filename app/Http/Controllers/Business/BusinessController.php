@@ -810,11 +810,20 @@ class BusinessController extends Controller
 
         $user = auth()->user();
 
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        $currentPasswordValid = $user->password === $validated['current_password'];
+        if (!$currentPasswordValid) {
+            try {
+                $currentPasswordValid = Hash::check($validated['current_password'], $user->password);
+            } catch (\RuntimeException $e) {
+                $currentPasswordValid = false;
+            }
+        }
+
+        if (!$currentPasswordValid) {
             return back()->with('error', 'Current password is incorrect.');
         }
 
-        $user->password = Hash::make($validated['password']);
+        $user->password = $validated['password'];
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');

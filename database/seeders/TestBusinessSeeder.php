@@ -15,7 +15,7 @@ class TestBusinessSeeder extends Seeder
         $user = User::create([
             'name' => 'Test Business',
             'email' => 'test@business.com',
-            'password' => Hash::make('123456'),
+            'password' => '123456',
             'role' => 'business',
             'email_verified_at' => now(),
         ]);

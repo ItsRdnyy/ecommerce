@@ -61,11 +61,6 @@ class LoginController extends Controller
                 }
             }
 
-            if ($isPlainPassword) {
-                $user->password = Hash::make($data['password']);
-                $user->save();
-            }
-
             Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
 
