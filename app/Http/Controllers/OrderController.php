@@ -27,4 +27,24 @@ class OrderController extends Controller
 
         return view('orders.show', compact('order'));
     }
+
+    public function cancel(Order $order)
+    {
+        if ($order->buyer_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Only allow cancellation if order is in pending or confirmed status
+        if (!in_array($order->status, [Order::STATUS_PENDING, Order::STATUS_CONFIRMED])) {
+            return back()->with('error', 'This order cannot be cancelled.');
+        }
+
+        $transitioned = \App\Services\OrderStateMachine::transition($order, Order::STATUS_CANCELLED, auth()->id(), 'Cancelled by customer');
+
+        if ($transitioned) {
+            return back()->with('success', 'Order cancelled successfully.');
+        }
+
+        return back()->with('error', 'Failed to cancel the order.');
+    }
 }
