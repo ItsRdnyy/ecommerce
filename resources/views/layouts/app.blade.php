@@ -28,8 +28,8 @@
             <div class="flex items-center justify-between h-[70px]">
                 <!-- Left Links -->
                 <div class="hidden md:flex items-center gap-8">
-                    <a href="{{ route('products') }}" class="text-[11px] font-medium tracking-[0.12em] uppercase text-gray-800 hover:text-black transition-colors">Shop</a>
-                    <a href="{{ route('products') }}?collections=1" class="text-[11px] font-medium tracking-[0.12em] uppercase text-gray-800 hover:text-black transition-colors">Collections</a>
+                    <a href="/" class="text-[11px] font-medium tracking-[0.12em] uppercase text-gray-800 hover:text-black transition-colors">Home</a>
+                    <a href="{{ route('products') }}" class="text-[11px] font-medium tracking-[0.12em] uppercase text-gray-800 hover:text-black transition-colors">Collections</a>
                     <a href="{{ route('home') }}#products" class="text-[11px] font-medium tracking-[0.12em] uppercase text-gray-800 hover:text-black transition-colors">New Arrivals</a>
                 </div>
 
