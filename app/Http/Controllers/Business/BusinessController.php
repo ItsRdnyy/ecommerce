@@ -15,6 +15,7 @@ use App\Models\InventoryLog;
 use App\Models\PreorderQueue;
 use App\Models\Notification;
 use App\Models\BusinessProfile;
+use App\Models\ContactMessage;
 use App\Services\InventoryManager;
 use App\Services\NotificationService;
 use App\Services\OrderStateMachine;
@@ -24,6 +25,25 @@ use Illuminate\Support\Facades\Storage;
 
 class BusinessController extends Controller
 {
+    public function messages()
+    {
+        $messages = ContactMessage::where('business_id', auth()->id())
+            ->orderByDesc('created_at')
+            ->paginate(50);
+        return view('business.messages', compact('messages'));
+    }
+
+    public function updateMessageStatus(Request $request, ContactMessage $message)
+    {
+        if ($message->business_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate(['status' => 'required|in:unread,read']);
+        $message->update(['status' => $request->status]);
+        return back()->with('success', 'Message status updated.');
+    }
+
     public function index()
     {
         $business = auth()->user()->businessProfile;

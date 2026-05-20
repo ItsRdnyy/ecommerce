@@ -271,18 +271,46 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <!-- Contact Form -->
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                    <form class="space-y-6">
+                    @if(session('success'))
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+                            <span class="block sm:inline">{{ session('success') }}</span>
+                        </div>
+                    @endif
+
+                    @if($errors->any())
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+                            <ul class="list-disc list-inside">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('contact.store') }}" method="POST" class="space-y-6">
+                        @csrf
                         <div>
                             <label for="name" class="block text-[12px] font-semibold text-gray-900 mb-2 tracking-[0.12em] uppercase">Your Name</label>
-                            <input type="text" id="name" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-2 focus:ring-gray-900/20 transition-all duration-200" placeholder="Enter Your Name">
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-2 focus:ring-gray-900/20 transition-all duration-200" placeholder="Enter Your Name">
                         </div>
                         <div>
                             <label for="email" class="block text-[12px] font-semibold text-gray-900 mb-2 tracking-[0.12em] uppercase">Email Address</label>
-                            <input type="email" id="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-2 focus:ring-gray-900/20 transition-all duration-200" placeholder="example@gmail.com">
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-2 focus:ring-gray-900/20 transition-all duration-200" placeholder="example@gmail.com">
+                        </div>
+                        <div>
+                            <label for="business_id" class="block text-[12px] font-semibold text-gray-900 mb-2 tracking-[0.12em] uppercase">Recipient Store/Shop (Optional)</label>
+                            <select id="business_id" name="business_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-2 focus:ring-gray-900/20 transition-all duration-200">
+                                <option value="">General Support / Admin</option>
+                                @foreach($businesses as $business)
+                                    <option value="{{ $business->id }}" {{ old('business_id') == $business->id ? 'selected' : '' }}>
+                                        {{ $business->businessProfile->business_name ?? $business->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                         <div>
                             <label for="message" class="block text-[12px] font-semibold text-gray-900 mb-2 tracking-[0.12em] uppercase">Message</label>
-                            <textarea id="message" name="message" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-2 focus:ring-gray-900/20 transition-all duration-200" placeholder="Tell us how we can help..."></textarea>
+                            <textarea id="message" name="message" rows="5" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-2 focus:ring-gray-900/20 transition-all duration-200" placeholder="Tell us how we can help...">{{ old('message') }}</textarea>
                         </div>
                         <button type="submit" class="w-full btn-primary">
                             Send Message

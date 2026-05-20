@@ -13,10 +13,24 @@ use App\Models\Setting;
 use App\Models\BusinessProfile;
 use App\Models\Review;
 use App\Models\TransactionLog;
+use App\Models\ContactMessage;
 use App\Events\UserApproved;
 
 class AdminController extends Controller
 {
+    public function messages()
+    {
+        $messages = ContactMessage::with('business.businessProfile')->orderByDesc('created_at')->paginate(50);
+        return view('admin.messages', compact('messages'));
+    }
+
+    public function updateMessageStatus(Request $request, ContactMessage $message)
+    {
+        $request->validate(['status' => 'required|in:unread,read']);
+        $message->update(['status' => $request->status]);
+        return back()->with('success', 'Message status updated.');
+    }
+
     public function index()
     {
         $totalUsers = User::where('role', User::ROLE_BUSINESS)->count();
