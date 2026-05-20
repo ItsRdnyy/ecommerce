@@ -45,6 +45,12 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 text-[14px] leading-relaxed">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <!-- Verification Form -->
         <form method="POST" action="{{ route('verify.submit') }}" class="space-y-5">
             @csrf
@@ -72,6 +78,15 @@
             <button type="submit"
                     class="w-full bg-[#111] text-white text-[11px] font-semibold tracking-[0.12em] uppercase px-8 py-3.5 hover:bg-gray-800 transition-colors">
                 Verify & Activate
+            </button>
+        </form>
+
+        <!-- Resend Code Form -->
+        <form method="POST" action="{{ route('verify.resend') }}" class="mt-4 text-center">
+            @csrf
+            <input type="hidden" name="email" value="{{ old('email', request('email')) }}">
+            <button type="submit" class="text-[13px] text-gray-500 hover:text-gray-900 transition-colors">
+                Didn't receive a code? <span class="font-medium underline underline-offset-2">Resend code</span>
             </button>
         </form>
 
