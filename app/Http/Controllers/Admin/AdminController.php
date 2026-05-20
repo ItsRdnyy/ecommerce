@@ -114,7 +114,22 @@ class AdminController extends Controller
 
     public function updateOrderStatus(Request $request, Order $order)
     {
-        $order->update(['status' => $request->status]);
+        $newStatus = $request->status;
+        $currentStatus = $order->status;
+
+        $allowedTransitions = [
+            'pending' => ['processing', 'cancelled'],
+            'processing' => ['shipped', 'cancelled'],
+            'shipped' => ['delivered'],
+            'delivered' => [],
+            'cancelled' => [],
+        ];
+
+        if (!in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
+            return back()->with('error', 'Invalid status transition.');
+        }
+
+        $order->update(['status' => $newStatus]);
         return back()->with('success', 'Order status updated.');
     }
 

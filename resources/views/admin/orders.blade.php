@@ -29,17 +29,43 @@
         <td class="px-6 py-4"><span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase rounded-full {{ $o->status=='pending'?'bg-yellow-100 text-yellow-800':($o->status=='processing'?'bg-blue-100 text-blue-800':($o->status=='shipped'?'bg-purple-100 text-purple-800':($o->status=='delivered'?'bg-green-100 text-green-800':'bg-gray-100 text-gray-800'))) }}">{{ $o->status }}</span></td>
         <td class="px-6 py-4 text-[13px] text-gray-500">{{ $o->created_at->format('M d, Y') }}</td>
         <td class="px-6 py-4">
-            <div class="flex items-center gap-2">
-                <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline">@csrf @method('PATCH')
-                    <select name="status" onchange="this.form.submit()" class="text-[12px] border border-[#e8e5e0] rounded px-2 py-1 bg-white cursor-pointer">
-                        <option value="pending" {{ $o->status=='pending'?'selected':'' }}>Pending</option>
-                        <option value="processing" {{ $o->status=='processing'?'selected':'' }}>Processing</option>
-                        <option value="shipped" {{ $o->status=='shipped'?'selected':'' }}>Shipped</option>
-                        <option value="delivered" {{ $o->status=='delivered'?'selected':'' }}>Delivered</option>
-                        <option value="cancelled" {{ $o->status=='cancelled'?'selected':'' }}>Cancelled</option>
-                    </select>
-                </form>
-                <button type="button" onclick="toggleDetails({{ $o->id }})" class="text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500 hover:text-black border border-[#e8e5e0] hover:border-black px-2.5 py-1 bg-white transition-colors cursor-pointer">
+            <div class="flex items-center gap-3">
+                @if($o->status === 'cancelled')
+                    <span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border border-red-200 bg-red-50 text-red-700">
+                        Cancelled
+                    </span>
+                @else
+                    @php
+                        $states = ['pending', 'processing', 'shipped', 'delivered'];
+                        $currentIndex = array_search($o->status, $states);
+                    @endphp
+                    <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline m-0 p-0">
+                        @csrf
+                        @method('PATCH')
+                        <select name="status" data-current="{{ $o->status }}" onchange="handleStatusChange(this)" class="text-[11px] font-semibold tracking-wider uppercase border border-[#e8e5e0] rounded px-2.5 py-1.5 bg-[#f5f3ef] hover:border-black transition-all cursor-pointer text-gray-800 select-none">
+                            @foreach($states as $index => $state)
+                                @php
+                                    $label = match($state) {
+                                        'pending' => 'Pending',
+                                        'processing' => 'Process',
+                                        'shipped' => 'Ship',
+                                        'delivered' => 'Deliver',
+                                    };
+                                    
+                                    $optionDisabled = ($index != $currentIndex && $index != $currentIndex + 1);
+                                @endphp
+                                <option value="{{ $state }}" {{ $o->status == $state ? 'selected' : '' }} {{ $optionDisabled ? 'disabled' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                            @if(in_array($o->status, ['pending', 'processing']))
+                                <option value="cancelled">Cancel Order</option>
+                            @endif
+                        </select>
+                    </form>
+                @endif
+
+                <button type="button" onclick="toggleDetails({{ $o->id }})" class="text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500 hover:text-black border border-[#e8e5e0] hover:border-black px-2.5 py-1 bg-white transition-colors cursor-pointer select-none">
                     Details
                 </button>
             </div>
@@ -156,17 +182,43 @@
         <td class="px-6 py-4"><span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase rounded-full {{ $o->status=='pending'?'bg-yellow-100 text-yellow-800':($o->status=='processing'?'bg-blue-100 text-blue-800':($o->status=='shipped'?'bg-purple-100 text-purple-800':($o->status=='delivered'?'bg-green-100 text-green-800':'bg-gray-100 text-gray-800'))) }}">{{ $o->status }}</span></td>
         <td class="px-6 py-4 text-[13px] text-gray-500">{{ $o->created_at->format('M d, Y') }}</td>
         <td class="px-6 py-4">
-            <div class="flex items-center gap-2">
-                <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline">@csrf @method('PATCH')
-                    <select name="status" onchange="this.form.submit()" class="text-[12px] border border-[#e8e5e0] rounded px-2 py-1 bg-white cursor-pointer">
-                        <option value="pending" {{ $o->status=='pending'?'selected':'' }}>Pending</option>
-                        <option value="processing" {{ $o->status=='processing'?'selected':'' }}>Processing</option>
-                        <option value="shipped" {{ $o->status=='shipped'?'selected':'' }}>Shipped</option>
-                        <option value="delivered" {{ $o->status=='delivered'?'selected':'' }}>Delivered</option>
-                        <option value="cancelled" {{ $o->status=='cancelled'?'selected':'' }}>Cancelled</option>
-                    </select>
-                </form>
-                <button type="button" onclick="toggleDetails({{ $o->id }})" class="text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500 hover:text-black border border-[#e8e5e0] hover:border-black px-2.5 py-1 bg-white transition-colors cursor-pointer">
+            <div class="flex items-center gap-3">
+                @if($o->status === 'cancelled')
+                    <span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border border-red-200 bg-red-50 text-red-700">
+                        Cancelled
+                    </span>
+                @else
+                    @php
+                        $states = ['pending', 'processing', 'shipped', 'delivered'];
+                        $currentIndex = array_search($o->status, $states);
+                    @endphp
+                    <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline m-0 p-0">
+                        @csrf
+                        @method('PATCH')
+                        <select name="status" data-current="{{ $o->status }}" onchange="handleStatusChange(this)" class="text-[11px] font-semibold tracking-wider uppercase border border-[#e8e5e0] rounded px-2.5 py-1.5 bg-[#f5f3ef] hover:border-black transition-all cursor-pointer text-gray-800 select-none">
+                            @foreach($states as $index => $state)
+                                @php
+                                    $label = match($state) {
+                                        'pending' => 'Pending',
+                                        'processing' => 'Process',
+                                        'shipped' => 'Ship',
+                                        'delivered' => 'Deliver',
+                                    };
+                                    
+                                    $optionDisabled = ($index != $currentIndex && $index != $currentIndex + 1);
+                                @endphp
+                                <option value="{{ $state }}" {{ $o->status == $state ? 'selected' : '' }} {{ $optionDisabled ? 'disabled' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                            @if(in_array($o->status, ['pending', 'processing']))
+                                <option value="cancelled">Cancel Order</option>
+                            @endif
+                        </select>
+                    </form>
+                @endif
+
+                <button type="button" onclick="toggleDetails({{ $o->id }})" class="text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500 hover:text-black border border-[#e8e5e0] hover:border-black px-2.5 py-1 bg-white transition-colors cursor-pointer select-none">
                     Details
                 </button>
             </div>
@@ -270,6 +322,16 @@ function toggleDetails(orderId) {
     if (row) {
         row.classList.toggle('hidden');
     }
+}
+
+function handleStatusChange(selectEl) {
+    if (selectEl.value === 'cancelled') {
+        if (!confirm('Are you sure you want to cancel this order?')) {
+            selectEl.value = selectEl.getAttribute('data-current');
+            return;
+        }
+    }
+    selectEl.form.submit();
 }
 </script>
 @endsection

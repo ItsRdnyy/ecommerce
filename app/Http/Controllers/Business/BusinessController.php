@@ -457,7 +457,22 @@ class BusinessController extends Controller
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
         ]);
 
-        $order->update(['status' => $validated['status']]);
+        $newStatus = $validated['status'];
+        $currentStatus = $order->status;
+
+        $allowedTransitions = [
+            'pending' => ['processing', 'cancelled'],
+            'processing' => ['shipped', 'cancelled'],
+            'shipped' => ['delivered'],
+            'delivered' => [],
+            'cancelled' => [],
+        ];
+
+        if (!in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
+            return redirect()->route('business.orders')->with('error', 'Invalid status transition.');
+        }
+
+        $order->update(['status' => $newStatus]);
 
         return redirect()->route('business.orders')->with('success', 'Order status updated successfully.');
     }
