@@ -151,9 +151,30 @@
                                         </div>
 
                                         <!-- Product Name -->
-                                        <h3 class="text-[15px] font-medium text-gray-900 mb-2 line-clamp-2">
+                                        <h3 class="text-[15px] font-medium text-gray-900 mb-1 line-clamp-2">
                                             {{ $product->name }}
                                         </h3>
+
+                                        @php
+                                            $approvedReviews = $product->reviews->where('status', 'approved');
+                                            $reviewsCount = $approvedReviews->count();
+                                            $averageRating = $reviewsCount > 0 ? round($approvedReviews->avg('rating'), 1) : null;
+                                        @endphp
+                                        <div class="mb-3">
+                                            @if($reviewsCount > 0)
+                                                <div class="flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                                    </svg>
+                                                    <span class="text-[12px] font-semibold text-gray-900">{{ number_format($averageRating, 1) }}</span>
+                                                    <span class="text-[11px] text-gray-500">({{ $reviewsCount }})</span>
+                                                </div>
+                                            @else
+                                                <div class="flex items-center text-gray-400">
+                                                    <span class="text-[11px] italic text-gray-400">No reviews</span>
+                                                </div>
+                                            @endif
+                                        </div>
 
                                         <!-- Description -->
                                         <p class="text-[13px] text-gray-600 mb-4 line-clamp-2">
@@ -177,24 +198,6 @@
                                                 Bulk discount: Up to {{ number_format($product->discountTiers->max('discount_percent'), 0) }}% Off
                                             </p>
                                         @endif
-                                         @php
-                                    $approvedReviews = $product->reviews->where('status', 'approved');
-                                    $reviewsCount = $approvedReviews->count();
-                                    $averageRating = $reviewsCount > 0 ? round($approvedReviews->avg('rating'), 1) : null;
-                                @endphp
-                                @if($reviewsCount > 0)
-                                    <div class="flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                                        </svg>
-                                        <span class="text-[12px] font-semibold text-gray-900">{{ number_format($averageRating, 1) }}</span>
-                                        <span class="text-[11px] text-gray-500">({{ $reviewsCount }})</span>
-                                    </div>
-                                @else
-                                    <div class="flex items-center text-gray-400">
-                                        <span class="text-[11px] italic">No reviews</span>
-                                    </div>
-                                @endif
                                         <!-- Sizes (Apparel & Shoes) -->
                                         @php
                                             if ($isShoe) {

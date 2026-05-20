@@ -21,7 +21,7 @@
         <div class="max-w-full mx-auto px-6">
             <div class="flex items-center justify-between h-[60px]">
                 <div class="flex items-center gap-6">
-                    <a href="/dashboard" class="text-[16px] font-semibold tracking-[0.2em] uppercase">
+                    <a href="{{ route('business.dashboard') }}" class="text-[16px] font-semibold tracking-[0.2em] uppercase">
                         PureFit Apparel
                     </a>
                     <span class="text-[11px] font-medium tracking-[0.1em] uppercase text-gray-400 hidden sm:inline">Business Panel</span>

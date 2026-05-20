@@ -81,6 +81,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.count');
 });
 
+Route::get('/dashboard', function () {
+    if (auth()->user()->isAdmin()) {
+        return redirect()->route('admin.dashboard');
+    }
+    if (auth()->user()->isBusiness()) {
+        return redirect()->route('business.dashboard');
+    }
+    return redirect('/');
+})->middleware('auth');
+
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/businesses', [AdminController::class, 'businesses'])->name('admin.businesses');
@@ -107,6 +117,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 });
 
 Route::middleware(['auth', 'business'])->prefix('business')->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('business.dashboard');
+    });
     Route::get('/dashboard', [BusinessController::class, 'index'])->name('business.dashboard');
     Route::get('/profile', [BusinessController::class, 'profile'])->name('business.profile');
     Route::post('/profile', [BusinessController::class, 'updateProfile'])->name('business.profile.update');
