@@ -172,26 +172,7 @@
         </div>
         @endif
 
-        @if($order->shipments->count())
-        <div class="bg-white border border-[#e8e5e0] p-6 mb-6">
-            <h3 class="text-[11px] font-semibold tracking-[0.15em] uppercase text-gray-900 mb-4">Shipment</h3>
-            @foreach($order->shipments as $shipment)
-                <p class="text-[13px] mb-2"><span class="text-gray-500">Courier:</span> {{ $shipment->courier ?? 'N/A' }}</p>
-                <p class="text-[13px] mb-2"><span class="text-gray-500">Tracking:</span> {{ $shipment->tracking_number ?? 'N/A' }}</p>
-                @if($shipment->timelines->count())
-                <div class="mt-4 space-y-3">
-                    @foreach($shipment->timelines as $tl)
-                    <div class="flex gap-4 text-[12px]">
-                        <span class="text-gray-500 shrink-0 w-24">{{ $tl->timestamp->format('M d, H:i') }}</span>
-                        <span class="font-medium">{{ ucfirst($tl->status) }}</span>
-                        <span class="text-gray-600">{{ $tl->location }}</span>
-                    </div>
-                    @endforeach
-                </div>
-                @endif
-            @endforeach
-        </div>
-        @endif
+
 
         @if($order->payments->count())
         <div class="bg-white border border-[#e8e5e0] p-6">

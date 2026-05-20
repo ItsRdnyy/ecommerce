@@ -36,6 +36,7 @@ class CartController extends Controller
         $size = $request->size;
 
         // Determine if size is required based on category
+        $categoryName = strtolower($product->category->name ?? '');
         $isApparel = str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
         $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
 
@@ -126,6 +127,7 @@ class CartController extends Controller
         $size = $request->size;
 
         // Determine if size is required based on category
+        $categoryName = strtolower($product->category->name ?? '');
         $isApparel = str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
         $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
 
