@@ -448,23 +448,53 @@ class BusinessController extends Controller
         return redirect()->route('business.products.archived')->with('success', 'Product deleted successfully.');
     }
 
-    public function orders()
+    public function orders(Request $request)
     {
         $businessId = auth()->id();
+        $search = $request->input('search');
 
-        $retailOrders = Order::where('business_id', $businessId)
+        $retailQuery = Order::where('business_id', $businessId)
             ->where('type', 'retail')
             ->with('buyer', 'items.product')
-            ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('created_at');
 
-        $b2bOrders = Order::where('business_id', $businessId)
+        $b2bQuery = Order::where('business_id', $businessId)
             ->where('type', 'b2b')
             ->with('buyer', 'items.product')
-            ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('created_at');
 
-        return view('business.orders', compact('retailOrders', 'b2bOrders'));
+        if (!empty($search)) {
+            $parsedId = preg_replace('/[^0-9]/', '', $search);
+
+            $filter = function ($q) use ($search, $parsedId) {
+                if (!empty($parsedId)) {
+                    $q->where('id', $parsedId);
+                } else {
+                    $q->where('id', 'like', "%{$search}%");
+                }
+
+                $q->orWhere('status', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%")
+                  ->orWhereHas('buyer', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  ->orWhere('shipping_address->name', 'like', "%{$search}%")
+                  ->orWhere('shipping_address->city', 'like', "%{$search}%")
+                  ->orWhere('shipping_address->state', 'like', "%{$search}%")
+                  ->orWhereHas('items.product', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            };
+
+            $retailQuery->where($filter);
+            $b2bQuery->where($filter);
+        }
+
+        $retailOrders = $retailQuery->get();
+        $b2bOrders = $b2bQuery->get();
+
+        return view('business.orders', compact('retailOrders', 'b2bOrders', 'search'));
     }
 
     public function updateOrderStatus(Request $request, Order $order)

@@ -53,7 +53,7 @@ Route::post('/logout', function () {
     return redirect('/');
 })->name('logout');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'buyer'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
     Route::post('/cart/buy-now', [CartController::class, 'buyNow'])->name('cart.buyNow');
@@ -72,12 +72,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/orders/{order}/receive', [OrderController::class, 'receive'])->name('orders.receive');
     Route::post('/orders/{order}/items/{product}/review', [OrderController::class, 'storeReview'])->name('orders.review.store');
 
-    
     Route::get('/preorders/create/{product}', [PreorderController::class, 'create'])->name('preorder.create');
     Route::post('/preorders/{product}', [PreorderController::class, 'store'])->name('preorder.store');
     Route::get('/preorders/{preorder}', [PreorderController::class, 'show'])->name('preorder.show');
     Route::post('/preorders/{preorder}/cancel', [PreorderController::class, 'cancel'])->name('preorder.cancel');
+});
 
+Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');

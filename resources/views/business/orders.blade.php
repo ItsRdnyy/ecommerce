@@ -11,6 +11,30 @@
         <p class="text-[14px] text-gray-600">Manage incoming orders and shipments.</p>
     </div>
 
+    <!-- Search Bar -->
+    <div class="mb-8 bg-white border border-[#e8e5e0] p-4 lg:p-6 rounded">
+        <form method="GET" action="{{ route('business.orders') }}" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-450" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.637Z"/>
+                    </svg>
+                </span>
+                <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Search orders by ID, customer name, email, product, or status..." class="block w-full pl-9 pr-4 py-2.5 text-[13px] bg-[#f5f3ef] border border-[#e8e5e0] rounded focus:outline-none focus:border-black transition-colors placeholder-gray-400">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="px-5 py-2.5 bg-black text-white text-[11px] font-semibold tracking-[0.1em] uppercase hover:bg-gray-800 transition-colors rounded select-none cursor-pointer">
+                    Search
+                </button>
+                @if(!empty($search))
+                    <a href="{{ route('business.orders') }}" class="px-4 py-2.5 border border-[#e8e5e0] bg-white text-gray-600 text-[11px] font-semibold tracking-[0.1em] uppercase hover:border-black hover:text-black transition-all rounded inline-flex items-center justify-center select-none cursor-pointer">
+                        Clear
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
+
     <!-- Retail Orders -->
     <div class="bg-white border border-[#e8e5e0] mb-10">
         <div class="px-6 py-4 border-b border-[#e8e5e0]">
