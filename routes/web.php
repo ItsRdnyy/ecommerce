@@ -96,6 +96,9 @@ Route::get('/dashboard', function () {
 })->middleware('auth');
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('admin.dashboard');
+    });
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/businesses', [AdminController::class, 'businesses'])->name('admin.businesses');
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products');

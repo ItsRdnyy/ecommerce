@@ -33,7 +33,7 @@ class AdminController extends Controller
 
     public function index()
     {
-        $totalUsers = User::where('role', User::ROLE_BUSINESS)->count();
+        $totalUsers = User::where('role', '!=', User::ROLE_ADMIN)->count();
         $totalBusinesses = User::where('role', User::ROLE_BUSINESS)->count();
         $totalProducts = Product::count();
         $retailOrders = Order::where('type', 'retail')->count();
@@ -46,10 +46,23 @@ class AdminController extends Controller
         $openDisputes = Dispute::where('status', 'open')->count();
         $pendingVerifications = BusinessProfile::whereNull('verified_at')->count();
 
+        $storeIncomes = User::where('role', User::ROLE_BUSINESS)
+            ->with(['businessProfile'])
+            ->withSum(['ordersAsBusiness as total_income' => function($query) {
+                $query->whereIn('status', [Order::STATUS_DELIVERED, Order::STATUS_COMPLETED]);
+            }], 'total')
+            ->get()
+            ->map(function($user) {
+                return [
+                    'name' => $user->businessProfile->business_name ?? $user->name,
+                    'income' => (float) ($user->total_income ?? 0)
+                ];
+            });
+
         return view('admin.dashboard', compact(
             'users', 'totalUsers', 'totalBusinesses',
             'totalProducts', 'retailOrders', 'b2bOrders', 'totalRevenue',
-            'openDisputes', 'pendingVerifications'
+            'openDisputes', 'pendingVerifications', 'storeIncomes'
         ));
     }
 
