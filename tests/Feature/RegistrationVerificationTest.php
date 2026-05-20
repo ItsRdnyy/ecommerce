@@ -66,7 +66,7 @@ class RegistrationVerificationTest extends TestCase
         $user = User::create([
             'name' => 'Pending User',
             'email' => 'pending@example.com',
-            'password' => Hash::make('Password123!'),
+            'password' => 'Password123!',
             'role' => User::ROLE_BUYER,
             'status' => User::STATUS_PENDING,
         ]);
@@ -85,7 +85,7 @@ class RegistrationVerificationTest extends TestCase
         $user = User::create([
             'name' => 'Approved User',
             'email' => 'approved@example.com',
-            'password' => Hash::make('Password123!'),
+            'password' => 'Password123!',
             'role' => User::ROLE_BUYER,
             'status' => User::STATUS_APPROVED,
             'verification_code' => '123456',
@@ -105,7 +105,7 @@ class RegistrationVerificationTest extends TestCase
         $user = User::create([
             'name' => 'Approved User',
             'email' => 'approved@example.com',
-            'password' => Hash::make('Password123!'),
+            'password' => 'Password123!',
             'role' => User::ROLE_BUYER,
             'status' => User::STATUS_APPROVED,
             'verification_code' => '123456',
@@ -130,7 +130,7 @@ class RegistrationVerificationTest extends TestCase
         $user = User::create([
             'name' => 'Approved User',
             'email' => 'approved@example.com',
-            'password' => Hash::make('Password123!'),
+            'password' => 'Password123!',
             'role' => User::ROLE_BUYER,
             'status' => User::STATUS_APPROVED,
             'verification_code' => '123456',
@@ -152,7 +152,7 @@ class RegistrationVerificationTest extends TestCase
         $user = User::create([
             'name' => 'Approved User',
             'email' => 'approved@example.com',
-            'password' => Hash::make('Password123!'),
+            'password' => 'Password123!',
             'role' => User::ROLE_BUYER,
             'status' => User::STATUS_APPROVED,
             'verification_code' => '123456',
@@ -176,7 +176,7 @@ class RegistrationVerificationTest extends TestCase
         $user = User::create([
             'name' => 'Approved User',
             'email' => 'approved@example.com',
-            'password' => Hash::make('Password123!'),
+            'password' => 'Password123!',
             'role' => User::ROLE_BUYER,
             'status' => User::STATUS_APPROVED,
             'verification_code' => '123456',

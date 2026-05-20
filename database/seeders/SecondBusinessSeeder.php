@@ -15,7 +15,7 @@ class SecondBusinessSeeder extends Seeder
         $user = User::create([
             'name' => 'Urban Fashion Co',
             'email' => 'urban@fashion.com',
-            'password' => Hash::make('password'),
+            'password' => 'password',
             'role' => 'business',
             'email_verified_at' => now(),
         ]);
