@@ -28,7 +28,6 @@ class RegisterController extends Controller
 
         if ($request->account_type === 'business') {
             $rules['business_name'] = ['required', 'string', 'max:255'];
-            $rules['tax_id'] = ['required', 'string', 'max:50'];
         }
 
         $data = $request->validate($rules);
@@ -48,7 +47,6 @@ class RegisterController extends Controller
             \App\Models\BusinessProfile::create([
                 'user_id' => $user->id,
                 'business_name' => $data['business_name'],
-                'tax_id' => $data['tax_id'],
             ]);
         }
 

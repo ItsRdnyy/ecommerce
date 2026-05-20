@@ -36,7 +36,6 @@ class RoleUserSeeder extends Seeder
                 'business_name' => 'PureFit Wholesale',
                 'business_address' => '123 Commerce St, City',
                 'business_phone' => '09123456789',
-                'tax_id' => 'TIN-123456789',
             ]
         );
     }

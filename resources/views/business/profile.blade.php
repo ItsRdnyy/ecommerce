@@ -73,11 +73,6 @@
                 <input type="text" name="business_phone" id="business_phone" value="{{ old('business_phone', $business->business_phone ?? '') }}" class="w-full px-4 py-3 border border-[#e8e5e0] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900 transition-colors" placeholder="+63 XXX XXX XXXX">
             </div>
 
-            <!-- Tax ID -->
-            <div class="mb-6">
-                <label for="tax_id" class="block text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-2">Tax ID</label>
-                <input type="text" name="tax_id" id="tax_id" value="{{ old('tax_id', $business->tax_id ?? '') }}" class="w-full px-4 py-3 border border-[#e8e5e0] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900 transition-colors" placeholder="TIN or tax identification number">
-            </div>
 
             <!-- Submit Button -->
             <div class="pt-4">

@@ -203,8 +203,6 @@ class BusinessController extends Controller
             'category_id' => $validated['category_id'],
             'retail_price' => $validated['retail_price'],
             'wholesale_price' => null,
-            'moq' => 5,
-            'is_wholesale_enabled' => 0,
             'stock' => $validated['stock'],
             'status' => $validated['status'],
             'gender' => $validated['gender'],
@@ -314,8 +312,6 @@ class BusinessController extends Controller
             'category_id' => $validated['category_id'],
             'retail_price' => $validated['retail_price'],
             'wholesale_price' => null,
-            'moq' => 5,
-            'is_wholesale_enabled' => 0,
             'stock' => $validated['stock'],
             'status' => $validated['status'],
             'gender' => $validated['gender'],
@@ -824,7 +820,6 @@ class BusinessController extends Controller
             'business_name' => 'required|string|max:255',
             'business_address' => 'nullable|string|max:255',
             'business_phone' => 'nullable|string|max:20',
-            'tax_id' => 'nullable|string|max:50',
             'logo' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,webp',
         ]);
 
@@ -832,7 +827,6 @@ class BusinessController extends Controller
             'business_name' => $validated['business_name'],
             'business_address' => $validated['business_address'] ?? null,
             'business_phone' => $validated['business_phone'] ?? null,
-            'tax_id' => $validated['tax_id'] ?? null,
         ];
 
         if ($request->hasFile('logo') && $request->file('logo')->isValid()) {

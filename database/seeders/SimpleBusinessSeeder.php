@@ -25,7 +25,6 @@ class SimpleBusinessSeeder extends Seeder
             'business_name' => 'Demo Business Store',
             'business_address' => '456 Demo Street',
             'business_phone' => '0987654321',
-            'tax_id' => 'DEMO123',
         ]);
 
         $this->command->info('Demo business account created successfully!');

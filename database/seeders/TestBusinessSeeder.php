@@ -26,7 +26,6 @@ class TestBusinessSeeder extends Seeder
             'business_name' => 'Test Business Store',
             'business_address' => '123 Test Street',
             'business_phone' => '1234567890',
-            'tax_id' => 'TEST123',
         ]);
 
         $this->command->info('Test business account created successfully!');

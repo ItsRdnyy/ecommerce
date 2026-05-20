@@ -44,7 +44,6 @@ class RegistrationVerificationTest extends TestCase
             'password_confirmation' => 'Password123!',
             'account_type' => 'business',
             'business_name' => 'Jane Store',
-            'tax_id' => 'TAX123',
         ]);
 
         $response->assertRedirect(route('login'));
@@ -57,7 +56,6 @@ class RegistrationVerificationTest extends TestCase
 
         $this->assertDatabaseHas('business_profiles', [
             'business_name' => 'Jane Store',
-            'tax_id' => 'TAX123',
         ]);
     }
 
