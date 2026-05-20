@@ -49,9 +49,14 @@
 
             <div>
                 <label for="password" class="block text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-700 mb-2">Password</label>
-                <input type="password" id="password" name="password" required
-                       class="w-full bg-white border border-[#ddd8d0] px-4 py-3 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#111] transition-colors"
-                       placeholder="Enter your password">
+                <div class="relative">
+                    <input type="password" id="password" name="password" required
+                           class="w-full bg-white border border-[#ddd8d0] pl-4 pr-12 py-3 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#111] transition-colors"
+                           placeholder="Enter your password">
+                    <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wider text-gray-500 uppercase hover:text-black focus:outline-none select-none">
+                        Show
+                    </button>
+                </div>
                 @error('password')
                     <p class="mt-2 text-[12px] text-red-600">{{ $message }}</p>
                 @enderror
@@ -59,11 +64,13 @@
 
             <div class="flex items-center justify-between">
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="remember" class="w-4 h-4 border border-[#ddd8d0] accent-[#111]">
-                    <span class="text-[13px] text-gray-600">Remember me</span>
+                    <!-- <input type="checkbox" name="remember" class="w-4 h-4 border border-[#ddd8d0] accent-[#111]">
+                    <span class="text-[13px] text-gray-600">Remember me</span> -->
                 </label>
-                <a href="#" class="text-[13px] text-gray-600 hover:text-black transition-colors underline underline-offset-2">Forgot password?</a>
+                <a href="{{ route('password.request') }}" class="text-[13px] text-gray-600 hover:text-black transition-colors underline underline-offset-2">Forgot password?</a>
             </div>
+
+            <input type="hidden" name="redirect" value="{{ old('redirect', request('redirect')) }}">
 
             <button type="submit"
                     class="w-full bg-[#111] text-white text-[11px] font-semibold tracking-[0.12em] uppercase px-8 py-3.5 hover:bg-gray-800 transition-colors">
@@ -84,9 +91,21 @@
         <!-- Register Link -->
         <p class="text-center text-[14px] text-gray-600">
             Don't have an account?
-            <a href="#" class="text-gray-900 font-medium hover:underline underline-offset-2 ml-1">Create an account</a>
+            <a href="{{ route('register') }}" class="text-gray-900 font-medium hover:underline underline-offset-2 ml-1">Create an account</a>
         </p>
     </div>
 
+    <script>
+        function togglePasswordVisibility(fieldId, button) {
+            const field = document.getElementById(fieldId);
+            if (field.type === 'password') {
+                field.type = 'text';
+                button.textContent = 'Hide';
+            } else {
+                field.type = 'password';
+                button.textContent = 'Show';
+            }
+        }
+    </script>
 </body>
 </html>

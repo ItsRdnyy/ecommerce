@@ -11,7 +11,7 @@ class PreorderController extends Controller
     public function create(Product $product)
     {
         if (!$product->is_preorder) {
-            return redirect()->route('marketplace.show', $product)
+            return redirect()->route('products')
                 ->with('error', 'Preorder is not available for this product.');
         }
 

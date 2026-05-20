@@ -29,15 +29,133 @@
         <td class="px-6 py-4"><span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase rounded-full {{ $o->status=='pending'?'bg-yellow-100 text-yellow-800':($o->status=='processing'?'bg-blue-100 text-blue-800':($o->status=='shipped'?'bg-purple-100 text-purple-800':($o->status=='delivered'?'bg-green-100 text-green-800':'bg-gray-100 text-gray-800'))) }}">{{ $o->status }}</span></td>
         <td class="px-6 py-4 text-[13px] text-gray-500">{{ $o->created_at->format('M d, Y') }}</td>
         <td class="px-6 py-4">
-            <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline">@csrf @method('PATCH')
-                <select name="status" onchange="this.form.submit()" class="text-[12px] border border-[#e8e5e0] rounded px-2 py-1 bg-white cursor-pointer">
-                    <option value="pending" {{ $o->status=='pending'?'selected':'' }}>Pending</option>
-                    <option value="processing" {{ $o->status=='processing'?'selected':'' }}>Processing</option>
-                    <option value="shipped" {{ $o->status=='shipped'?'selected':'' }}>Shipped</option>
-                    <option value="delivered" {{ $o->status=='delivered'?'selected':'' }}>Delivered</option>
-                    <option value="cancelled" {{ $o->status=='cancelled'?'selected':'' }}>Cancelled</option>
-                </select>
-            </form>
+            <div class="flex items-center gap-3">
+                @if(in_array($o->status, ['cancelled', 'shipped', 'delivered', 'completed', 'refunded']))
+                    <span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border {{ $o->status === 'delivered' || $o->status === 'completed' ? 'border-green-200 bg-green-50 text-green-700' : ($o->status === 'cancelled' || $o->status === 'refunded' ? 'border-red-200 bg-red-50 text-red-700' : 'border-purple-200 bg-purple-50 text-purple-700') }}">
+                        {{ ucfirst($o->status) }}
+                    </span>
+                @else
+                    @php
+                        $states = ['pending', 'processing', 'shipped'];
+                        $currentIndex = array_search($o->status, $states);
+                    @endphp
+                    <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline m-0 p-0">
+                        @csrf
+                        @method('PATCH')
+                        <select name="status" data-current="{{ $o->status }}" onchange="handleStatusChange(this)" class="text-[11px] font-semibold tracking-wider uppercase border border-[#e8e5e0] rounded px-2.5 py-1.5 bg-[#f5f3ef] hover:border-black transition-all cursor-pointer text-gray-800 select-none">
+                            @foreach($states as $index => $state)
+                                @php
+                                    $label = match($state) {
+                                        'pending' => 'Pending',
+                                        'processing' => 'Process',
+                                        'shipped' => 'Ship',
+                                    };
+                                    
+                                    $optionDisabled = ($index != $currentIndex && $index != $currentIndex + 1);
+                                @endphp
+                                <option value="{{ $state }}" {{ $o->status == $state ? 'selected' : '' }} {{ $optionDisabled ? 'disabled' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                            @if(in_array($o->status, ['pending', 'processing']))
+                                <option value="cancelled">Cancel Order</option>
+                            @endif
+                        </select>
+                    </form>
+                @endif
+
+                <button type="button" onclick="toggleDetails({{ $o->id }})" class="text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500 hover:text-black border border-[#e8e5e0] hover:border-black px-2.5 py-1 bg-white transition-colors cursor-pointer select-none">
+                    Details
+                </button>
+            </div>
+        </td>
+    </tr>
+    <tr id="details-{{ $o->id }}" class="hidden bg-[#faf9f7] border-b border-[#f0ede8]">
+        <td colspan="7" class="px-8 py-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- Shipping Address -->
+                <div>
+                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Shipping Address</h4>
+                    @if($o->shipping_address)
+                        <p class="text-[13px] font-medium text-gray-900">{{ $o->shipping_address['name'] ?? '—' }}</p>
+                        <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
+                            {{ $o->shipping_address['line1'] ?? '' }}<br>
+                            {{ $o->shipping_address['city'] ?? '' }}, {{ $o->shipping_address['state'] ?? '' }} {{ $o->shipping_address['postal'] ?? '' }}
+                            @if(!empty($o->shipping_address['contact']))
+                                <br>Contact: {{ $o->shipping_address['contact'] }}
+                            @elseif(!empty($o->shipping_address['country']))
+                                <br>{{ $o->shipping_address['country'] }}
+                            @endif
+                        </p>
+                    @else
+                        <p class="text-[12px] text-gray-500">No shipping address provided.</p>
+                    @endif
+                </div>
+
+                <!-- Billing Address -->
+                <div>
+                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Billing Address</h4>
+                    @if($o->billing_address)
+                        <p class="text-[13px] font-medium text-gray-900">{{ $o->billing_address['name'] ?? '—' }}</p>
+                        <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
+                            {{ $o->billing_address['line1'] ?? '' }}<br>
+                            {{ $o->billing_address['city'] ?? '' }}, {{ $o->billing_address['state'] ?? '' }} {{ $o->billing_address['postal'] ?? '' }}
+                            @if(!empty($o->billing_address['contact']))
+                                <br>Contact: {{ $o->billing_address['contact'] }}
+                            @elseif(!empty($o->billing_address['country']))
+                                <br>{{ $o->billing_address['country'] }}
+                            @endif
+                        </p>
+                    @else
+                        <p class="text-[12px] text-gray-500">No billing address provided.</p>
+                    @endif
+                </div>
+
+                <!-- Payment & Meta -->
+                <div>
+                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Meta & Notes</h4>
+                    <p class="text-[12px] text-gray-600"><span class="font-semibold text-gray-500 uppercase text-[9px] tracking-wider">Payment Method:</span> 
+                        {{ $o->payments->first() ? ucfirst($o->payments->first()->method) : 'N/A' }}
+                    </p>
+                    <p class="text-[12px] text-gray-600 mt-1"><span class="font-semibold text-gray-500 uppercase text-[9px] tracking-wider">Estimated Delivery:</span> 
+                        {{ $o->estimated_delivery_date ? \Carbon\Carbon::parse($o->estimated_delivery_date)->format('M d, Y') : 'N/A' }}
+                    </p>
+                    @if($o->notes)
+                        <div class="mt-2 p-2 border border-[#e8e5e0] bg-white text-[12px] text-gray-600 italic">
+                            "{{ $o->notes }}"
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Ordered Items Table -->
+            <div class="border-t border-[#e8e5e0] pt-4">
+                <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-3">Order Items</h4>
+                <div class="bg-white border border-[#e8e5e0] rounded overflow-hidden">
+                    <table class="w-full text-left text-[12px]">
+                        <thead>
+                            <tr class="bg-[#faf9f7] border-b border-[#e8e5e0] text-gray-500 text-[10px] uppercase tracking-wider font-semibold">
+                                <th class="px-4 py-2">Product</th>
+                                <th class="px-4 py-2">Variant</th>
+                                <th class="px-4 py-2 text-right">Price</th>
+                                <th class="px-4 py-2 text-center">Qty</th>
+                                <th class="px-4 py-2 text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($o->items as $item)
+                            <tr class="border-b border-[#f0ede8] last:border-b-0">
+                                <td class="px-4 py-2.5 font-medium text-gray-900">{{ $item->product->name }}</td>
+                                <td class="px-4 py-2.5 text-gray-500">{{ $item->variant_name ?? '—' }}</td>
+                                <td class="px-4 py-2.5 text-right">₱{{ number_format($item->price, 2) }}</td>
+                                <td class="px-4 py-2.5 text-center">{{ $item->quantity }}</td>
+                                <td class="px-4 py-2.5 text-right font-medium text-gray-900">₱{{ number_format($item->price * $item->quantity, 2) }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </td>
     </tr>
     @empty<tr><td colspan="7" class="px-6 py-10 text-center text-[14px] text-gray-500">No retail orders.</td></tr>@endforelse
@@ -63,18 +181,155 @@
         <td class="px-6 py-4"><span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase rounded-full {{ $o->status=='pending'?'bg-yellow-100 text-yellow-800':($o->status=='processing'?'bg-blue-100 text-blue-800':($o->status=='shipped'?'bg-purple-100 text-purple-800':($o->status=='delivered'?'bg-green-100 text-green-800':'bg-gray-100 text-gray-800'))) }}">{{ $o->status }}</span></td>
         <td class="px-6 py-4 text-[13px] text-gray-500">{{ $o->created_at->format('M d, Y') }}</td>
         <td class="px-6 py-4">
-            <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline">@csrf @method('PATCH')
-                <select name="status" onchange="this.form.submit()" class="text-[12px] border border-[#e8e5e0] rounded px-2 py-1 bg-white cursor-pointer">
-                    <option value="pending" {{ $o->status=='pending'?'selected':'' }}>Pending</option>
-                    <option value="processing" {{ $o->status=='processing'?'selected':'' }}>Processing</option>
-                    <option value="shipped" {{ $o->status=='shipped'?'selected':'' }}>Shipped</option>
-                    <option value="delivered" {{ $o->status=='delivered'?'selected':'' }}>Delivered</option>
-                    <option value="cancelled" {{ $o->status=='cancelled'?'selected':'' }}>Cancelled</option>
-                </select>
-            </form>
+            <div class="flex items-center gap-3">
+                @if(in_array($o->status, ['cancelled', 'shipped', 'delivered', 'completed', 'refunded']))
+                    <span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border {{ $o->status === 'delivered' || $o->status === 'completed' ? 'border-green-200 bg-green-50 text-green-700' : ($o->status === 'cancelled' || $o->status === 'refunded' ? 'border-red-200 bg-red-50 text-red-700' : 'border-purple-200 bg-purple-50 text-purple-700') }}">
+                        {{ ucfirst($o->status) }}
+                    </span>
+                @else
+                    @php
+                        $states = ['pending', 'processing', 'shipped'];
+                        $currentIndex = array_search($o->status, $states);
+                    @endphp
+                    <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline m-0 p-0">
+                        @csrf
+                        @method('PATCH')
+                        <select name="status" data-current="{{ $o->status }}" onchange="handleStatusChange(this)" class="text-[11px] font-semibold tracking-wider uppercase border border-[#e8e5e0] rounded px-2.5 py-1.5 bg-[#f5f3ef] hover:border-black transition-all cursor-pointer text-gray-800 select-none">
+                            @foreach($states as $index => $state)
+                                @php
+                                    $label = match($state) {
+                                        'pending' => 'Pending',
+                                        'processing' => 'Process',
+                                        'shipped' => 'Ship',
+                                    };
+                                    
+                                    $optionDisabled = ($index != $currentIndex && $index != $currentIndex + 1);
+                                @endphp
+                                <option value="{{ $state }}" {{ $o->status == $state ? 'selected' : '' }} {{ $optionDisabled ? 'disabled' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                            @if(in_array($o->status, ['pending', 'processing']))
+                                <option value="cancelled">Cancel Order</option>
+                            @endif
+                        </select>
+                    </form>
+                @endif
+
+                <button type="button" onclick="toggleDetails({{ $o->id }})" class="text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500 hover:text-black border border-[#e8e5e0] hover:border-black px-2.5 py-1 bg-white transition-colors cursor-pointer select-none">
+                    Details
+                </button>
+            </div>
+        </td>
+    </tr>
+    <tr id="details-{{ $o->id }}" class="hidden bg-[#faf9f7] border-b border-[#f0ede8]">
+        <td colspan="7" class="px-8 py-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- Shipping Address -->
+                <div>
+                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Shipping Address</h4>
+                    @if($o->shipping_address)
+                        <p class="text-[13px] font-medium text-gray-900">{{ $o->shipping_address['name'] ?? '—' }}</p>
+                        <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
+                            {{ $o->shipping_address['line1'] ?? '' }}<br>
+                            {{ $o->shipping_address['city'] ?? '' }}, {{ $o->shipping_address['state'] ?? '' }} {{ $o->shipping_address['postal'] ?? '' }}
+                            @if(!empty($o->shipping_address['contact']))
+                                <br>Contact: {{ $o->shipping_address['contact'] }}
+                            @elseif(!empty($o->shipping_address['country']))
+                                <br>{{ $o->shipping_address['country'] }}
+                            @endif
+                        </p>
+                    @else
+                        <p class="text-[12px] text-gray-500">No shipping address provided.</p>
+                    @endif
+                </div>
+
+                <!-- Billing Address -->
+                <div>
+                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Billing Address</h4>
+                    @if($o->billing_address)
+                        <p class="text-[13px] font-medium text-gray-900">{{ $o->billing_address['name'] ?? '—' }}</p>
+                        <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
+                            {{ $o->billing_address['line1'] ?? '' }}<br>
+                            {{ $o->billing_address['city'] ?? '' }}, {{ $o->billing_address['state'] ?? '' }} {{ $o->billing_address['postal'] ?? '' }}
+                            @if(!empty($o->billing_address['contact']))
+                                <br>Contact: {{ $o->billing_address['contact'] }}
+                            @elseif(!empty($o->billing_address['country']))
+                                <br>{{ $o->billing_address['country'] }}
+                            @endif
+                        </p>
+                    @else
+                        <p class="text-[12px] text-gray-500">No billing address provided.</p>
+                    @endif
+                </div>
+
+                <!-- Payment & Meta -->
+                <div>
+                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Meta & Notes</h4>
+                    <p class="text-[12px] text-gray-600"><span class="font-semibold text-gray-500 uppercase text-[9px] tracking-wider">Payment Method:</span> 
+                        {{ $o->payments->first() ? ucfirst($o->payments->first()->method) : 'N/A' }}
+                    </p>
+                    <p class="text-[12px] text-gray-600 mt-1"><span class="font-semibold text-gray-500 uppercase text-[9px] tracking-wider">Estimated Delivery:</span> 
+                        {{ $o->estimated_delivery_date ? \Carbon\Carbon::parse($o->estimated_delivery_date)->format('M d, Y') : 'N/A' }}
+                    </p>
+                    @if($o->notes)
+                        <div class="mt-2 p-2 border border-[#e8e5e0] bg-white text-[12px] text-gray-600 italic">
+                            "{{ $o->notes }}"
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Ordered Items Table -->
+            <div class="border-t border-[#e8e5e0] pt-4">
+                <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-3">Order Items</h4>
+                <div class="bg-white border border-[#e8e5e0] rounded overflow-hidden">
+                    <table class="w-full text-left text-[12px]">
+                        <thead>
+                            <tr class="bg-[#faf9f7] border-b border-[#e8e5e0] text-gray-500 text-[10px] uppercase tracking-wider font-semibold">
+                                <th class="px-4 py-2">Product</th>
+                                <th class="px-4 py-2">Variant</th>
+                                <th class="px-4 py-2 text-right">Price</th>
+                                <th class="px-4 py-2 text-center">Qty</th>
+                                <th class="px-4 py-2 text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($o->items as $item)
+                            <tr class="border-b border-[#f0ede8] last:border-b-0">
+                                <td class="px-4 py-2.5 font-medium text-gray-900">{{ $item->product->name }}</td>
+                                <td class="px-4 py-2.5 text-gray-500">{{ $item->variant_name ?? '—' }}</td>
+                                <td class="px-4 py-2.5 text-right">₱{{ number_format($item->price, 2) }}</td>
+                                <td class="px-4 py-2.5 text-center">{{ $item->quantity }}</td>
+                                <td class="px-4 py-2.5 text-right font-medium text-gray-900">₱{{ number_format($item->price * $item->quantity, 2) }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </td>
     </tr>
     @empty<tr><td colspan="7" class="px-6 py-10 text-center text-[14px] text-gray-500">No B2B orders.</td></tr>@endforelse
     </tbody></table></div>
 </div>
+
+<script>
+function toggleDetails(orderId) {
+    const row = document.getElementById('details-' + orderId);
+    if (row) {
+        row.classList.toggle('hidden');
+    }
+}
+
+function handleStatusChange(selectEl) {
+    if (selectEl.value === 'cancelled') {
+        if (!confirm('Are you sure you want to cancel this order?')) {
+            selectEl.value = selectEl.getAttribute('data-current');
+            return;
+        }
+    }
+    selectEl.form.submit();
+}
+</script>
 @endsection

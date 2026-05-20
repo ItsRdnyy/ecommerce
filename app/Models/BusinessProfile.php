@@ -14,7 +14,7 @@ class BusinessProfile extends Model
         'business_name',
         'business_address',
         'business_phone',
-        'tax_id',
+        'logo',
     ];
 
     public function user()

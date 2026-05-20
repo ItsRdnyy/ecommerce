@@ -26,17 +26,23 @@ class Cart extends Model
         $subtotal = 0;
         $discount = 0;
         $shipping = 0;
+        $hasWholesaleItem = false;
 
         foreach ($this->items as $item) {
-            $itemTotal = $item->quantity * $item->unit_price;
-            $subtotal += $itemTotal;
+            $lineNet = $item->quantity * $item->unit_price;
+            $subtotal += $lineNet + $item->discount_amount;
             $discount += $item->discount_amount;
             $shipping += $item->shipping_estimate;
+
+            if ($item->type === 'wholesale') {
+                $hasWholesaleItem = true;
+            }
         }
 
         $this->total = $subtotal - $discount;
         $this->discount_total = $discount;
         $this->shipping_total = $shipping;
+        $this->type = $hasWholesaleItem ? 'b2b' : 'retail';
         $this->save();
     }
 }

@@ -17,166 +17,137 @@
         </p>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        <div class="bg-white border border-[#e8e5e0] px-6 py-5">
-            <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Total Products</p>
-            <p class="text-[28px] font-light text-gray-900">{{ $totalProducts }}</p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        <div class="lg:col-span-2 bg-white border border-[#e8e5e0] p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-[14px] font-semibold text-gray-900">Sales Overview (Last 30 Days)</h2>
+                <span class="text-[12px] text-gray-500">Revenue in ₱</span>
+            </div>
+            <div class="h-[300px] relative">
+                <canvas id="salesChart"></canvas>
+            </div>
         </div>
-        <div class="bg-white border border-[#e8e5e0] px-6 py-5">
-            <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Retail Orders</p>
-            <p class="text-[28px] font-light text-gray-900">{{ $retailOrders }}</p>
-        </div>
-        <div class="bg-white border border-[#e8e5e0] px-6 py-5">
-            <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">B2B Orders</p>
-            <p class="text-[28px] font-light text-gray-900">{{ $b2bOrders }}</p>
-        </div>
-        <div class="bg-white border border-[#e8e5e0] px-6 py-5">
-            <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Total Earnings</p>
-            <p class="text-[28px] font-light text-gray-900">₱{{ number_format($totalEarnings, 2) }}</p>
+
+        <div class="bg-white border border-[#e8e5e0] p-6">
+            <h2 class="text-[14px] font-semibold text-gray-900 mb-4">Quick Stats</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <div class="rounded border border-[#e8e5e0] p-4">
+                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Total Products</p>
+                    <p class="text-[24px] font-light text-gray-900">{{ $totalProducts }}</p>
+                </div>
+                <div class="rounded border border-[#e8e5e0] p-4">
+                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Active Products</p>
+                    <p class="text-[24px] font-light text-gray-900">{{ $activeProducts }}</p>
+                </div>
+                <div class="rounded border border-[#e8e5e0] p-4">
+                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Pending Orders</p>
+                    <p class="text-[24px] font-light text-gray-900">{{ $incomingRetail + $bulkRequests }}</p>
+                </div>
+                <div class="rounded border border-[#e8e5e0] p-4">
+                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Total Earnings</p>
+                    <p class="text-[24px] font-light text-gray-900">₱{{ number_format($totalEarnings, 2) }}</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Product Management -->
-    <div class="bg-white border border-[#e8e5e0] mb-10">
-        <div class="px-6 py-4 border-b border-[#e8e5e0] flex items-center justify-between">
-            <h2 class="text-[13px] font-semibold tracking-[0.1em] uppercase text-gray-700">Product Management</h2>
-            <a href="{{ route('business.products') }}" class="text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">Add Product</a>
-        </div>
-        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Active Products</p>
-                <p class="text-[22px] text-gray-900">{{ $activeProducts }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Out of Stock</p>
-                <p class="text-[22px] text-gray-900">{{ $outOfStock }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Retail Price Tiers</p>
-                <p class="text-[22px] text-gray-900">{{ $totalProducts }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Wholesale Tiers</p>
-                <p class="text-[22px] text-gray-900">{{ $wholesaleListings }}</p>
-            </div>
-        </div>
-        <div class="px-6 py-4 border-t border-[#e8e5e0] bg-[#faf9f7]">
-            <p class="text-[13px] text-gray-500">Products will appear here once you start adding inventory.</p>
-        </div>
-    </div>
-
-    <!-- Sales Panel & Insights Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-        <!-- Sales Panel -->
-        <div class="bg-white border border-[#e8e5e0]">
-            <div class="px-6 py-4 border-b border-[#e8e5e0]">
-                <h2 class="text-[13px] font-semibold tracking-[0.1em] uppercase text-gray-700">Sales Panel</h2>
-            </div>
-            <div class="p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-600">Retail sales</span>
-                    <span class="text-[14px] font-medium text-gray-900">{{ $retailSales }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-600">B2B bulk sales</span>
-                    <span class="text-[14px] font-medium text-gray-900">{{ $b2bSales }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-600">Pending commission</span>
-                    <span class="text-[14px] font-medium text-gray-900">₱{{ number_format($pendingCommission, 2) }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-600">Available earnings</span>
-                    <span class="text-[14px] font-medium text-gray-900">₱{{ number_format($availableEarnings, 2) }}</span>
-                </div>
-                <div class="pt-2">
-                    <a href="{{ route('business.sales') }}" class="inline-flex text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">View full sales</a>
-                </div>
+        <div class="bg-white border border-[#e8e5e0] p-6">
+            <h2 class="text-[14px] font-semibold text-gray-900 mb-4">Recent Activity</h2>
+            <div class="space-y-4">
+                @forelse($recentOrders as $order)
+                    <div class="rounded border border-[#e8e5e0] p-4">
+                        <p class="text-[13px] font-semibold text-gray-600">Order #{{ $order->id }}</p>
+                        <p class="text-[14px] text-gray-900">{{ ucfirst($order->type) }} • {{ $order->status }}</p>
+                        <p class="text-[12px] text-gray-500">{{ $order->created_at->diffForHumans() }}</p>
+                    </div>
+                @empty
+                    <div class="rounded border border-[#e8e5e0] p-4 text-[13px] text-gray-500">
+                        No recent orders yet.
+                    </div>
+                @endforelse
             </div>
         </div>
-
-        <!-- Insights -->
-        <div class="bg-white border border-[#e8e5e0]">
-            <div class="px-6 py-4 border-b border-[#e8e5e0]">
-                <h2 class="text-[13px] font-semibold tracking-[0.1em] uppercase text-gray-700">Insights</h2>
-            </div>
-            <div class="p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-600">Best selling product</span>
-                    <span class="text-[14px] font-medium text-gray-900">{{ $bestSellingProduct->name ?? '—' }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-600">Solo buyer customers</span>
-                    <span class="text-[14px] font-medium text-gray-900">{{ $soloBuyerCustomers }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-600">Business customers</span>
-                    <span class="text-[14px] font-medium text-gray-900">{{ $businessCustomers }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-600">Stock performance</span>
-                    <span class="text-[14px] font-medium text-gray-900">{{ $outOfStock > 0 ? 'Low' : 'Good' }}</span>
-                </div>
-                <div class="pt-2">
-                    <a href="#" class="inline-flex text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">View analytics</a>
-                </div>
-            </div>
+        <div class="space-y-6">
+            <a href="{{ route('business.profile') }}" class="block rounded-xl border border-[#e8e5e0] bg-white p-6 hover:bg-[#f5f3ef] transition-colors">
+                <h3 class="text-[15px] font-semibold text-gray-900 mb-2">Business Profile</h3>
+                <p class="text-[14px] text-gray-600">Manage name, contact, address, and logo.</p>
+            </a>
+            <a href="{{ route('business.products') }}" class="block rounded-xl border border-[#e8e5e0] bg-white p-6 hover:bg-[#f5f3ef] transition-colors">
+                <h3 class="text-[15px] font-semibold text-gray-900 mb-2">Product Management</h3>
+                <p class="text-[14px] text-gray-600">Add, edit, and delete products with images and pricing.</p>
+            </a>
         </div>
     </div>
 
-    <!-- Orders -->
-    <div class="bg-white border border-[#e8e5e0] mb-10">
-        <div class="px-6 py-4 border-b border-[#e8e5e0] flex items-center justify-between">
-            <h2 class="text-[13px] font-semibold tracking-[0.1em] uppercase text-gray-700">Orders</h2>
-            <a href="{{ route('business.orders') }}" class="text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">View all orders</a>
-        </div>
-        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Incoming Retail</p>
-                <p class="text-[22px] text-gray-900">{{ $incomingRetail }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Bulk Requests</p>
-                <p class="text-[22px] text-gray-900">{{ $bulkRequests }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">To Ship</p>
-                <p class="text-[22px] text-gray-900">{{ $toShip }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Shipped</p>
-                <p class="text-[22px] text-gray-900">{{ $shipped }}</p>
-            </div>
-        </div>
-        <div class="px-6 py-4 border-t border-[#e8e5e0] bg-[#faf9f7]">
-            <p class="text-[13px] text-gray-500">New orders will appear here once customers start purchasing.</p>
-        </div>
-    </div>
-
-    <!-- B2B Marketplace -->
-    <div class="bg-white border border-[#e8e5e0] mb-10">
-        <div class="px-6 py-4 border-b border-[#e8e5e0] flex items-center justify-between">
-            <h2 class="text-[13px] font-semibold tracking-[0.1em] uppercase text-gray-700">B2B Marketplace</h2>
-            <a href="#" class="text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">Browse wholesale listings</a>
-        </div>
-        <div class="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Wholesale Listings</p>
-                <p class="text-[22px] text-gray-900">{{ $wholesaleListings }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Pending Negotiations</p>
-                <p class="text-[22px] text-gray-900">{{ $bulkRequests }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Bulk Purchases Made</p>
-                <p class="text-[22px] text-gray-900">{{ $b2bOrders }}</p>
-            </div>
-        </div>
-        <div class="px-6 py-4 border-t border-[#e8e5e0] bg-[#faf9f7]">
-            <p class="text-[13px] text-gray-500">Browse and negotiate wholesale listings from other businesses.</p>
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <a href="{{ route('business.orders') }}" class="block rounded-xl border border-[#e8e5e0] bg-white p-6 hover:bg-[#f5f3ef] transition-colors">
+            <h3 class="text-[15px] font-semibold text-gray-900 mb-2">Orders / Requests</h3>
+            <p class="text-[14px] text-gray-600">View and update order status for retail and bulk requests.</p>
+        </a>
+        <a href="{{ route('business.settings') }}" class="block rounded-xl border border-[#e8e5e0] bg-white p-6 hover:bg-[#f5f3ef] transition-colors">
+            <h3 class="text-[15px] font-semibold text-gray-900 mb-2">Settings</h3>
+            <p class="text-[14px] text-gray-600">Change your password and account controls.</p>
+        </a>
     </div>
 
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const labels = {!! json_encode($dailyRevenue->pluck('date')) !!};
+        const data = {!! json_encode($dailyRevenue->pluck('revenue')) !!};
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Daily Revenue',
+                    data: data,
+                    backgroundColor: 'rgba(17, 17, 17, 0.05)',
+                    borderColor: '#111',
+                    borderWidth: 2,
+                    yAxisID: 'y',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#111',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return '₱' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        grid: { color: '#e8e5e0', drawBorder: false },
+                        ticks: { font: { size: 11 }, color: '#666', callback: function(value) { return '₱' + value.toLocaleString(); } }
+                    },
+                    x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#666', maxRotation: 45, minRotation: 45 } }
+                }
+            }
+        });
+    });
+</script>
+@endpush

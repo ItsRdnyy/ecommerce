@@ -39,6 +39,30 @@
                     </span>
                 </div>
                 
+                <!-- Reviews Summary -->
+                @php
+                    $approvedReviews = $product->reviews->where('status', 'approved');
+                    $reviewsCount = $approvedReviews->count();
+                    $averageRating = $reviewsCount > 0 ? round($approvedReviews->avg('rating'), 1) : null;
+                @endphp
+                <div class="flex items-center gap-1.5 mb-3">
+                    @if($reviewsCount > 0)
+                        <div class="flex text-yellow-500">
+                            @for($i = 1; $i <= 5; $i++)
+                                @if($i <= round($averageRating))
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                @else
+                                    <svg class="w-3.5 h-3.5 text-gray-300 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                @endif
+                            @endfor
+                        </div>
+                        <span class="text-[11px] font-semibold text-gray-900">{{ number_format($averageRating, 1) }}</span>
+                        <span class="text-[11px] text-gray-500">({{ $reviewsCount }} {{ Str::plural('review', $reviewsCount) }})</span>
+                    @else
+                        <span class="text-[11px] text-gray-400 italic">No reviews yet</span>
+                    @endif
+                </div>
+                
                 <!-- Prices -->
                 <div class="flex items-center gap-3 mb-3">
                     <div>
@@ -58,6 +82,27 @@
                     <p class="text-[11px] text-gray-500">Stock</p>
                     <p class="text-[14px] font-medium {{ $product->stock == 0 ? 'text-red-600' : 'text-gray-600' }}">{{ $product->stock }} units</p>
                 </div>
+                
+                <!-- Sizes (Apparel & Shoes) -->
+                @php
+                    $categoryName = strtolower($product->category->name ?? '');
+                    $isApparel = str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                    $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+                    $showSizes = $isApparel || $isShoe;
+                    $sizes = ($showSizes && $product->variants) ? $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values() : collect();
+                @endphp
+                @if($showSizes && $sizes->isNotEmpty())
+                <div class="mb-3">
+                    <p class="text-[11px] text-gray-500 mb-1">Available Sizes</p>
+                    <div class="flex flex-wrap gap-1">
+                        @foreach($sizes as $size)
+                        <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium border border-gray-200 rounded text-gray-600 bg-gray-50">
+                            {{ $size }}
+                        </span>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
                 
                 <!-- Discount Tiers -->
                 @if(($product->discountTiers ?? collect())->count() > 0)

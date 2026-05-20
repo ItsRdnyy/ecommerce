@@ -1,0 +1,204 @@
+
+/* Modern Design Tokens */
+:root {
+  --brand-primary: #111111;
+  --brand-light: #f5f3ef;
+  --surface-white: #ffffff;
+  --text-primary: #111111;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border-light: #e5e5e5;
+  --border-medium: #cccccc;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition-base: 200ms ease;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* ============================================================
+   BUTTON COMPONENTS
+   ============================================================ */
+
+/* Modern button styles */
+.btn-primary {
+  background: var(--brand-primary);
+  color: var(--surface-white);
+  border: 2px solid var(--brand-primary);
+  padding: 14px 32px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--brand-primary);
+  border: 2px solid var(--brand-primary);
+  padding: 14px 32px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--brand-primary);
+  color: var(--surface-white);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================================
+   FEATURE CARDS
+   ============================================================ */
+
+.feature-card {
+  transition: all var(--transition-base);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+}
+
+/* ============================================================
+   PRODUCT CARDS
+   ============================================================ */
+
+.product-card {
+  transition: all var(--transition-base);
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+}
+
+.product-card img {
+  transition: transform 500ms ease;
+}
+
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+
+input[type="text"],
+input[type="email"],
+textarea {
+  transition: all var(--transition-base);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.2);
+}
+
+/* ============================================================
+   SOCIAL MEDIA ICONS
+   ============================================================ */
+
+.social-icon {
+  transition: all var(--transition-base);
+}
+
+.social-icon:hover {
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   RESPONSIVE UTILITIES
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .btn-primary,
+  .btn-secondary {
+    padding: 12px 24px;
+    font-size: 10px;
+  }
+}
+
+/* ============================================================
+   ACCESSIBILITY ENHANCEMENTS
+   ============================================================ */
+
+/* Focus styles for better accessibility */
+.btn-primary:focus,
+.btn-secondary:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .feature-card,
+  .product-card,
+  .social-icon {
+    transition: none;
+  }
+  
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .feature-card:hover,
+  .product-card:hover,
+  .social-icon:hover {
+    transform: none;
+  }
+}

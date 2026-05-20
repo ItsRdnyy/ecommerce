@@ -22,12 +22,20 @@ class User extends Authenticatable
     const ROLE_BUSINESS = 'business';
     const ROLE_BUYER = 'buyer';
 
+    const STATUS_PENDING = 'pending';
+    const STATUS_APPROVED = 'approved';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_REJECTED = 'rejected';
+    const STATUS_SUSPENDED = 'suspended';
+
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
         'status',
+        'verification_code',
+        'verification_expires_at',
     ];
 
     /**
@@ -49,6 +57,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'verification_expires_at' => 'datetime',
         ];
     }
 
@@ -85,11 +94,6 @@ class User extends Authenticatable
     public function cart()
     {
         return $this->hasOne(\App\Models\Cart::class);
-    }
-
-    public function wallet()
-    {
-        return $this->hasOne(\App\Models\Wallet::class);
     }
 
     public function reviews()

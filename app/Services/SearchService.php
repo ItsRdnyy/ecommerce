@@ -75,22 +75,29 @@ class SearchService
             });
         }
 
-        $sort = $filters['sort'] ?? 'latest';
-        match ($sort) {
-            'price_asc' => $query->orderBy('retail_price', 'asc'),
-            'price_desc' => $query->orderBy('retail_price', 'desc'),
-            'popular' => $query->orderByDesc(
-                Product::selectRaw('COUNT(*)')
-                    ->from('order_items')
-                    ->whereColumn('order_items.product_id', 'products.id')
-            ),
-            'rating' => $query->orderByDesc(
-                Product::selectRaw('COALESCE(AVG(rating), 0)')
-                    ->from('reviews')
-                    ->whereColumn('reviews.product_id', 'products.id')
-            ),
-            default => $query->latest(),
-        };
+        // Only apply sorting if explicitly specified, otherwise preserve original order
+        if (!empty($filters['sort'])) {
+            $sort = $filters['sort'];
+            match ($sort) {
+                'price_asc' => $query->orderBy('retail_price', 'asc'),
+                'price_desc' => $query->orderBy('retail_price', 'desc'),
+                'popular' => $query->orderByDesc(
+                    Product::selectRaw('COUNT(*)')
+                        ->from('order_items')
+                        ->whereColumn('order_items.product_id', 'products.id')
+                ),
+                'rating' => $query->orderByDesc(
+                    Product::selectRaw('COALESCE(AVG(rating), 0)')
+                        ->from('reviews')
+                        ->whereColumn('reviews.product_id', 'products.id')
+                ),
+                'latest' => $query->latest(),
+                default => $query->orderBy('id', 'asc'),
+            };
+        } else {
+            // Preserve original product order by ID ascending (when no sort is specified)
+            $query->orderBy('id', 'asc');
+        }
 
         return $query;
     }

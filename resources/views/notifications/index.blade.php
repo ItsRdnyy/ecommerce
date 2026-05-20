@@ -48,4 +48,87 @@
         @endif
     </div>
 </section>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle individual "Mark read" forms
+    document.querySelectorAll('form[action*="/notifications/"]').forEach(form => {
+        if (!form.action.includes('/read-all')) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        },
+                        body: new FormData(this)
+                    });
+                    
+                    if (response.ok) {
+                        // Remove the notification item from DOM
+                        const notifItem = this.closest('.bg-white');
+                        notifItem.style.opacity = '0.5';
+                        notifItem.style.borderColor = '#e8e5e0';
+                        
+                        // Remove the black dot and button
+                        const dot = notifItem.querySelector('.bg-\\[\\#111\\]');
+                        if (dot) dot.remove();
+                        
+                        this.remove();
+                        
+                        // Update notification count badge
+                        if (window.Layout && window.Layout.updateNotificationCount) {
+                            window.Layout.updateNotificationCount();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                }
+            });
+        }
+    });
+
+    // Handle "Mark all read" form
+    const markAllForm = document.querySelector('form[action*="/read-all"]');
+    if (markAllForm) {
+        markAllForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: new FormData(this)
+                });
+                
+                if (response.ok) {
+                    // Remove all black dots and buttons
+                    document.querySelectorAll('.bg-\\[\\#111\\]').forEach(dot => dot.remove());
+                    document.querySelectorAll('form[action*="/notifications/"]:not([action*="/read-all"])').forEach(form => form.remove());
+                    
+                    // Update all notification borders
+                    document.querySelectorAll('.border-gray-400').forEach(item => {
+                        item.classList.remove('border-gray-400');
+                        item.classList.add('border-[#e8e5e0]');
+                    });
+                    
+                    // Update notification count badge
+                    if (window.Layout && window.Layout.updateNotificationCount) {
+                        window.Layout.updateNotificationCount();
+                    }
+                }
+            } catch (error) {
+                console.error('Error marking all notifications as read:', error);
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection

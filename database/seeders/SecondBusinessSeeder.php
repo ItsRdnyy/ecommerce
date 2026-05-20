@@ -15,7 +15,7 @@ class SecondBusinessSeeder extends Seeder
         $user = User::create([
             'name' => 'Urban Fashion Co',
             'email' => 'urban@fashion.com',
-            'password' => Hash::make('password'),
+            'password' => 'password',
             'role' => 'business',
             'email_verified_at' => now(),
         ]);
@@ -26,7 +26,6 @@ class SecondBusinessSeeder extends Seeder
             'business_name' => 'Urban Fashion Co',
             'business_address' => '789 Trendy Street, Metro City',
             'business_phone' => '09987654321',
-            'tax_id' => '987-654-321',
         ]);
 
         $this->command->info('Second business account created successfully!');

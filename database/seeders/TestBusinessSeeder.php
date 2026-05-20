@@ -15,7 +15,7 @@ class TestBusinessSeeder extends Seeder
         $user = User::create([
             'name' => 'Test Business',
             'email' => 'test@business.com',
-            'password' => Hash::make('123456'),
+            'password' => '123456',
             'role' => 'business',
             'email_verified_at' => now(),
         ]);
@@ -26,7 +26,6 @@ class TestBusinessSeeder extends Seeder
             'business_name' => 'Test Business Store',
             'business_address' => '123 Test Street',
             'business_phone' => '1234567890',
-            'tax_id' => 'TEST123',
         ]);
 
         $this->command->info('Test business account created successfully!');

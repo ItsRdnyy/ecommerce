@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Invoice;
-use App\Models\Wallet;
 
 class PaymentProcessor
 {
@@ -63,17 +62,6 @@ class PaymentProcessor
         OrderStateMachine::transition($order, Order::STATUS_REFUNDED);
 
         return $refund;
-    }
-
-    public static function processWalletPayment(Order $order, Wallet $wallet, float $amount): ?Payment
-    {
-        if ($wallet->balance < $amount) {
-            return null;
-        }
-
-        $wallet->debit($amount, 'Order payment #' . $order->id, $order);
-
-        return self::process($order, 'wallet', $amount, 'full', 'WALLET-' . time());
     }
 
     public static function generateInvoice(Order $order): Invoice

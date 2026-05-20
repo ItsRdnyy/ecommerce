@@ -1,0 +1,592 @@
+@extends('layouts.app')
+
+@section('title', $product->name)
+
+@section('content')
+@php
+    $isAuthenticated = auth()->check();
+    $categoryName = strtolower($product->category->name ?? '');
+    $isApparel = str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+    $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+    $showSizes = $isApparel || $isShoe;
+    $totalStock = $showSizes ? $product->variants->sum('stock') : $product->stock;
+    $isPants = str_contains($categoryName, 'pants') || str_contains($categoryName, 'bottom') || str_contains($categoryName, 'trouser') || str_contains($categoryName, 'jeans');
+    if ($isShoe) {
+        $sizeChartImage = 'assets/images/shoeSizechart.png';
+        $sizeChartTitle = 'PureFit Shoe Size Chart';
+    } elseif ($isPants) {
+        $sizeChartImage = 'assets/images/PantsSizeChart.png';
+        $sizeChartTitle = 'PureFit Pants Size Chart';
+    } else {
+        $sizeChartImage = 'assets/images/SizeChart.png';
+        $sizeChartTitle = 'PureFit Apparel Size Chart';
+    }
+    
+    // Dynamic review computations
+    $approvedReviews = $product->reviews;
+    $reviewsCount = $approvedReviews->count();
+    $avgRating = $reviewsCount > 0 ? round($approvedReviews->avg('rating'), 1) : 0;
+@endphp
+
+    <!-- Product Detail Page -->
+    <div class="bg-[#f5f3ef] min-h-screen py-12">
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-10">
+            <!-- Breadcrumb -->
+            <nav class="mb-8">
+                <ol class="flex items-center gap-2 text-[13px] text-gray-600">
+                    <li><a href="{{ route('home') }}" class="hover:text-gray-900">Home</a></li>
+                    <li>/</li>
+                    <li><a href="{{ route('products') }}" class="hover:text-gray-900">Products</a></li>
+                    <li>/</li>
+                    <li class="text-gray-900">{{ $product->name }}</li>
+                </ol>
+            </nav>
+
+            <!-- Product Detail Container -->
+            <div class="bg-white border border-[#e8e5e0]">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 p-8 lg:p-12">
+                    <!-- Product Image -->
+                    <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                        @if($product->image)
+                            <img src="{{ asset('storage/' . $product->image) }}" 
+                                 alt="{{ $product->name }}" 
+                                 class="w-full h-full object-cover">
+                        @else
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <svg class="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="flex flex-col">
+                        <!-- Category -->
+                        <!-- Category & Gender -->
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-[11px] px-2 py-1 bg-[#f5f3ef] text-gray-700 rounded-full">
+                                        {{ $product->category->name ?? 'General' }}
+                                    </span>
+                                    <span class="inline-flex px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full {{ $product->gender == 'men' ? 'bg-blue-100 text-blue-800' : ($product->gender == 'women' ? 'bg-pink-100 text-pink-800' : 'bg-gray-100 text-gray-800') }}">
+                                        {{ ucfirst($product->gender) }}
+                                    </span>
+                                </div>
+
+                        <!-- Product Name -->
+                        <h1 class="font-serif-display text-[36px] text-gray-900 mb-4">
+                            {{ $product->name }}
+                        </h1>
+
+                        <!-- Rating -->
+                        <div class="flex items-center gap-2 mb-6">
+                            @if($reviewsCount > 0)
+                                <div class="flex">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= round($avgRating))
+                                            <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                            </svg>
+                                        @else
+                                            <svg class="w-5 h-5 text-gray-200 fill-current" viewBox="0 0 20 20">
+                                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                            </svg>
+                                        @endif
+                                    @endfor
+                                </div>
+                                <span class="text-[14px] text-gray-600 font-medium">
+                                    {{ number_format($avgRating, 1) }} ({{ $reviewsCount }} {{ Str::plural('review', $reviewsCount) }})
+                                </span>
+                            @else
+                                <div class="flex">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <svg class="w-5 h-5 text-gray-200 fill-current" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                    @endfor
+                                </div>
+                                <span class="text-[13px] text-gray-500 italic">No reviews yet</span>
+                            @endif
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-6">
+                            <span class="text-[32px] font-light text-gray-900" id="product-price-display" data-base-price="{{ $product->retail_price }}">
+                                ₱{{ number_format($product->retail_price, 2) }}
+                            </span>
+                            <div id="detail-discount-notice" class="text-[14px] text-green-700 font-semibold mt-1 hidden"></div>
+                            <div id="detail-total-display" class="text-[16px] text-gray-600 mt-1 hidden">
+                                Total: <span class="font-bold text-gray-900" id="detail-total-value">₱0.00</span>
+                            </div>
+
+
+                             @if($product->discountTiers && $product->discountTiers->count() > 0)
+                                 <div class="mt-3 space-y-1.5" id="detail-volume-discounts-container">
+                                     <p class="text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500">Volume Discounts</p>
+                                     <div class="flex flex-wrap gap-2">
+                                         @foreach($product->discountTiers as $tier)
+                                             <span class="inline-flex items-center px-2.5 py-1 rounded bg-green-50 border border-green-100 text-[12px] font-medium text-green-700">
+                                                 {{ $tier->min_quantity }}{{ $tier->max_quantity ? '-' . $tier->max_quantity : '+' }} pcs ➔ <span class="font-bold ml-1">{{ number_format($tier->discount_percent, 0) }}% Off</span>
+                                             </span>
+                                         @endforeach
+                                     </div>
+                                 </div>
+                             @endif
+                        </div>
+
+                        <!-- Stock Status -->
+                        <div class="mb-6" id="stock-status-container">
+                            @php
+                                if (!isset($totalStock)) {
+                                    $catName = strtolower($product->category->name ?? '');
+                                    $isApparelDetail = str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
+                                    $isShoeDetail = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
+                                    $showSizesDetail = $isApparelDetail || $isShoeDetail;
+                                    $variantsStockDetail = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;
+                                    $totalStock = $showSizesDetail && $product->variants->count() > 0 ? $variantsStockDetail : $product->stock;
+                                }
+                            @endphp
+                            @if($totalStock == 0)
+                                <span class="inline-flex items-center gap-2 text-red-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Out of Stock
+                                </span>
+                            @elseif($totalStock <= 10)
+                                <span class="inline-flex items-center gap-2 text-orange-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Only {{ $totalStock }} left in stock
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-2 text-green-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    In Stock ({{ $totalStock }} available)
+                                </span>
+                            @endif
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-8">
+                            <h2 class="text-[16px] font-semibold text-gray-900 mb-3">Description</h2>
+                            <p class="text-[15px] text-gray-600 leading-relaxed">
+                                {{ $product->description }}
+                            </p>
+                        </div>
+
+                        <!-- Available Sizes -->
+                        @php
+                            if ($isShoe) {
+                                $sizes = collect(range(38, 48));
+                                $sizeStocks = [];
+                                foreach ($sizes as $size) {
+                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                    $sizeStocks[$size] = $variant ? $variant->stock : 0;
+                                }
+                            } elseif ($isApparel && $product->variants) {
+                                $sizes = $product->variants->map(fn($v) => data_get($v->attributes, 'size'))->filter()->unique()->values();
+                                $sizeStocks = [];
+                                foreach ($sizes as $size) {
+                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                    $sizeStocks[$size] = $variant ? $variant->stock : 0;
+                                }
+                            } else {
+                                $sizes = collect();
+                                $sizeStocks = [];
+                            }
+                            $requiresSize = $sizes->isNotEmpty();
+                        @endphp
+                        @if($requiresSize)
+                        <div class="mb-8" id="sizes-section">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-[16px] font-semibold text-gray-900">
+                                    Select Size <span class="text-red-500">*</span>
+                                </h2>
+                                <button type="button" onclick="openSizeChartModal()" class="text-[12px] text-gray-500 hover:text-gray-900 underline flex items-center gap-1 font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 9h1m-1 3h1m-1 3h1m-1 3h1m3-12H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-3" />
+                                    </svg>
+                                    Size Chart
+                                </button>
+                            </div>
+                            <div class="flex flex-wrap gap-2" id="detail-sizes-container">
+                                 @foreach($sizes as $size)
+                                @php
+                                    $stock = $sizeStocks[$size] ?? 0;
+                                    $isOutOfStock = $stock <= 0;
+                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                    $price = $variant ? $variant->price : null;
+                                @endphp
+                                <button type="button"
+                                    onclick="selectDetailSize('{{ $size }}', this)"
+                                    data-stock="{{ $stock }}"
+                                    data-price="{{ $price }}"
+                                    {{ $isOutOfStock ? 'disabled' : '' }}
+                                    class="detail-size-btn px-4 py-2 text-[13px] font-medium border rounded transition-colors {{ $isOutOfStock ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' : 'border-gray-300 text-gray-700 hover:border-gray-900' }}">
+                                    {{ $size }}
+                                    @if($price)
+                                        <span class="block text-[10px] text-green-600 font-semibold mt-0.5">₱{{ number_format($price, 2) }}</span>
+                                    @endif
+                                </button>
+                                @endforeach
+                            </div>
+                            <input type="hidden" id="detail-selected-size" value="">
+                            <p class="text-[12px] text-red-500 mt-2 hidden" id="detail-size-error">Please select a size before proceeding.</p>
+                        </div>
+                        @endif
+
+                        <!-- Quantity and Add to Cart -->
+                        @auth
+                            <div class="mt-auto">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <label class="text-[14px] font-medium text-gray-900">Quantity:</label>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="changeDetailQuantity(-1)"
+                                                class="w-10 h-10 flex items-center justify-center border border-[#e8e5e0] bg-[#f5f3ef] text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 12h-15" />
+                                            </svg>
+                                        </button>
+                                        <input type="number"
+                                               id="quantity"
+                                               value="1"
+                                               min="1"
+                                               max="{{ $totalStock }}"
+                                               class="w-20 px-3 py-2 text-center border border-[#e8e5e0] bg-[#f5f3ef] text-[14px] text-gray-900 focus:outline-none focus:border-gray-900">
+                                        <button onclick="changeDetailQuantity(1)"
+                                                class="w-10 h-10 flex items-center justify-center border border-[#e8e5e0] bg-[#f5f3ef] text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.5v15m7.5-7.5h-15" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button class="add-to-cart-btn w-full btn-primary py-3 {{ $totalStock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                        data-product-id="{{ $product->id }}"
+                                        data-product-name="{{ $product->name }}"
+                                        data-quantity-selector="quantity"
+                                        {{ $totalStock == 0 ? 'disabled' : '' }}>
+                                    <span class="btn-text">{{ $totalStock == 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
+                                    <span class="btn-loading hidden">
+                                        <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
+                        @endauth
+
+                        @guest
+                            <div class="mt-auto">
+                                <a href="{{ route('login', ['redirect' => request()->fullUrl()]) }}" 
+                                   class="block w-full btn-primary py-3 text-center">
+                                    Log In to Purchase
+                                </a>
+                            </div>
+                        @endguest
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Feedback Section -->
+            <div class="bg-white border border-[#e8e5e0] mt-8 p-8 lg:p-12">
+                <h2 class="font-serif-display text-[26px] text-gray-900 mb-8 pb-4 border-b border-[#e8e5e0]">Customer Feedback</h2>
+                
+                @if($reviewsCount > 0)
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                        <!-- Overall Score Summary -->
+                        <div class="flex flex-col items-center justify-center p-6 bg-[#faf9f7] border border-[#e8e5e0] rounded text-center">
+                            <span class="text-[54px] font-light text-gray-900 leading-none mb-2">{{ number_format($avgRating, 1) }}</span>
+                            <div class="flex text-yellow-500 mb-2">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= round($avgRating))
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                    @else
+                                        <svg class="w-5 h-5 text-gray-200 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                    @endif
+                                @endfor
+                            </div>
+                            <span class="text-[12px] text-gray-500 font-medium">Based on {{ $reviewsCount }} {{ Str::plural('review', $reviewsCount) }}</span>
+                        </div>
+                        
+                        <!-- Rating Breakdown Bars -->
+                        <div class="md:col-span-2 flex flex-col justify-center space-y-3">
+                            @for($rating = 5; $rating >= 1; $rating--)
+                                @php
+                                    $count = $approvedReviews->where('rating', $rating)->count();
+                                    $percentage = $reviewsCount > 0 ? ($count / $reviewsCount) * 100 : 0;
+                                @endphp
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[12px] font-medium text-gray-600 w-12 flex items-center justify-end gap-1">
+                                        {{ $rating }} <svg class="w-3.5 h-3.5 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                    </span>
+                                    <div class="flex-1 h-2.5 bg-gray-100 rounded overflow-hidden">
+                                        <div class="h-full bg-yellow-400" style="width: {{ $percentage }}%"></div>
+                                    </div>
+                                    <span class="text-[12px] text-gray-500 w-10 font-medium">{{ $count }} ({{ round($percentage) }}%)</span>
+                                </div>
+                            @endfor
+                        </div>
+                    </div>
+                    
+                    <!-- Feedbacks List -->
+                    <div class="space-y-6">
+                        @foreach($approvedReviews as $rev)
+                            <div class="p-6 border border-[#e8e5e0] hover:border-black/20 transition-all duration-300">
+                                <div class="flex items-start justify-between gap-4 mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <!-- Monogram Avatar -->
+                                        <div class="w-10 h-10 rounded-full bg-[#faf9f7] border border-[#e8e5e0] flex items-center justify-center font-serif-display text-[14px] text-gray-700">
+                                            {{ strtoupper(substr($rev->user->name ?? 'A', 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <h4 class="text-[13px] font-semibold text-gray-900">{{ $rev->user->name ?? 'Anonymous Buyer' }}</h4>
+                                            <div class="flex text-yellow-500 mt-0.5">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    @if($i <= $rev->rating)
+                                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                                    @else
+                                                        <svg class="w-3.5 h-3.5 text-gray-200 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                                    @endif
+                                                @endfor
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[11px] text-gray-400 font-medium">{{ $rev->created_at->format('M d, Y') }}</span>
+                                </div>
+                                @if($rev->comment)
+                                    <p class="text-[14px] text-gray-700 leading-relaxed italic">"{{ $rev->comment }}"</p>
+                                @else
+                                    <p class="text-[13px] text-gray-400 italic">No written comment left.</p>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-16 bg-[#faf9f7] border border-[#e8e5e0] rounded">
+                        <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        <h3 class="font-serif-display text-[18px] text-gray-900 mb-1">No feedback yet</h3>
+                        <p class="text-[13px] text-gray-500 max-w-sm mx-auto">Purchase this product and be the first to share your thoughts with the community!</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Size Chart Modal -->
+    <div id="size-chart-modal"
+         class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4 transition-opacity duration-300">
+        <!-- Modal Container -->
+        <div class="relative w-full max-w-3xl scale-95 opacity-0 transition-all duration-300"
+             id="size-chart-content">
+            <!-- Modal Card -->
+            <div class="overflow-hidden rounded-2xl md:rounded-3xl bg-white shadow-2xl border border-gray-100 relative">
+                <!-- Close Button -->
+                <button onclick="closeSizeChartModal()"
+                        class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-100 transition border border-gray-200">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-gray-100 pl-6 pr-16 py-5 bg-gradient-to-r from-gray-50 to-white">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-semibold text-gray-900 pr-4">{{ $sizeChartTitle }}</h2>
+                        <p class="text-xs md:text-sm text-gray-500 mt-1">Find your perfect fit before ordering</p>
+                    </div>
+                </div>
+                <!-- Image -->
+                <div class="bg-gray-50 p-4 md:p-6 flex items-center justify-center overflow-x-auto">
+                    <img src="{{ asset($sizeChartImage) }}"
+                         alt="Size Chart"
+                         class="w-full min-w-[300px] md:min-w-0 max-h-[50vh] md:max-h-[70vh] object-contain rounded-xl md:rounded-2xl border border-gray-200 shadow-sm hover:scale-[1.01] transition-transform duration-300">
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+<script>
+function selectDetailSize(size, btn) {
+    // Deselect all
+    document.querySelectorAll('.detail-size-btn').forEach(b => {
+        b.classList.remove('bg-gray-900', 'text-white', 'border-gray-900');
+        b.classList.add('border-gray-300', 'text-gray-700');
+    });
+    // Highlight selected
+    btn.classList.remove('border-gray-300', 'text-gray-700');
+    btn.classList.add('bg-gray-900', 'text-white', 'border-gray-900');
+    // Store value
+    document.getElementById('detail-selected-size').value = size;
+    // Hide error
+    const err = document.getElementById('detail-size-error');
+    if (err) err.classList.add('hidden');
+    
+    // Update stock display and max quantity
+    const stock = parseInt(btn.dataset.stock) || 0;
+    const stockContainer = document.getElementById('stock-status-container');
+    if (stockContainer) {
+        if (stock === 0) {
+            stockContainer.innerHTML = `<span class="inline-flex items-center gap-2 text-red-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Out of Stock
+                                </span>`;
+        } else if (stock <= 10) {
+            stockContainer.innerHTML = `<span class="inline-flex items-center gap-2 text-orange-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Only ${stock} left in stock
+                                </span>`;
+        } else {
+            stockContainer.innerHTML = `<span class="inline-flex items-center gap-2 text-green-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    In Stock (${stock} available)
+                                </span>`;
+        }
+    }
+    
+    const quantityInput = document.getElementById('quantity');
+    if (quantityInput) {
+        quantityInput.max = stock;
+        if (parseInt(quantityInput.value) > stock) {
+            quantityInput.value = stock > 0 ? stock : 1;
+        }
+    }
+    
+    // Update Add to Cart button state
+    const addBtn = document.querySelector('.add-to-cart-btn');
+    if (addBtn) {
+        if (stock === 0) {
+            addBtn.disabled = true;
+            addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            addBtn.querySelector('.btn-text').textContent = 'Out of Stock';
+        } else {
+            addBtn.disabled = false;
+            addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            addBtn.querySelector('.btn-text').textContent = 'Add to Cart';
+        }
+    }
+
+    recalculateDetailPrice();
+}
+
+function changeDetailQuantity(delta) {
+    const qtyInput = document.getElementById('quantity');
+    if (!qtyInput) return;
+    const current = parseInt(qtyInput.value) || 1;
+    const min = parseInt(qtyInput.min) || 1;
+    const max = parseInt(qtyInput.max) || 999;
+    let newValue = current + delta;
+    if (newValue < min) newValue = min;
+    if (newValue > max) newValue = max;
+    qtyInput.value = newValue;
+    recalculateDetailPrice();
+}
+
+async function recalculateDetailPrice() {
+    const qtyInput = document.getElementById('quantity');
+    if (!qtyInput) return;
+    const quantity = parseInt(qtyInput.value) || 1;
+    const size = document.getElementById('detail-selected-size') ? document.getElementById('detail-selected-size').value : '';
+    const productId = "{{ $product->id }}";
+
+    try {
+        const response = await fetch(`/products/${productId}/calculate-price?quantity=${quantity}&size=${size}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update unit price display
+            const priceDisplay = document.getElementById('product-price-display');
+            if (priceDisplay) {
+                if (data.discount_rate > 0) {
+                    priceDisplay.innerHTML = `<span class="text-[20px] text-gray-500 line-through mr-2">₱${data.formatted_base_price}</span> <span class="text-green-600 font-semibold">₱${data.formatted_unit_price}</span>`;
+                } else {
+                    priceDisplay.textContent = '₱' + data.formatted_base_price;
+                }
+            }
+
+            // Update discount notice
+            const discountNotice = document.getElementById('detail-discount-notice');
+            if (discountNotice) {
+                if (data.discount_rate > 0) {
+                    discountNotice.textContent = `${data.discount_percent}% off applied for ordering ${data.quantity} pcs`;
+                    discountNotice.classList.remove('hidden');
+                } else {
+                    discountNotice.classList.add('hidden');
+                    discountNotice.textContent = '';
+                }
+            }
+
+            // Update total display
+            const totalDisplay = document.getElementById('detail-total-display');
+            const totalValue = document.getElementById('detail-total-value');
+            if (totalDisplay && totalValue) {
+                if (data.quantity > 1) {
+                    totalValue.textContent = '₱' + data.formatted_total;
+                    totalDisplay.classList.remove('hidden');
+                } else {
+                    totalDisplay.classList.add('hidden');
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error calculating price:', error);
+    }
+}
+
+function openSizeChartModal() {
+    const modal = document.getElementById('size-chart-modal');
+    const content = document.getElementById('size-chart-content');
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeSizeChartModal() {
+    const modal = document.getElementById('size-chart-modal');
+    const content = document.getElementById('size-chart-content');
+
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }, 200);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const firstBtn = document.querySelector('.detail-size-btn:not([disabled])');
+    if (firstBtn) {
+        firstBtn.click();
+    } else {
+        recalculateDetailPrice();
+    }
+
+    const qtyInput = document.getElementById('quantity');
+    if (qtyInput) {
+        qtyInput.addEventListener('change', recalculateDetailPrice);
+        qtyInput.addEventListener('input', recalculateDetailPrice);
+    }
+});
+</script>
+@endpush

@@ -6,9 +6,17 @@
 @section('content')
 
     <!-- Header -->
-    <div class="mb-8">
-        <h1 class="font-serif-display text-[36px] text-gray-900 mb-2">Products</h1>
-        <p class="text-[14px] text-gray-600">Manage your product inventory.</p>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+            <h1 class="font-serif-display text-[36px] text-gray-900 mb-2">Products</h1>
+            <p class="text-[14px] text-gray-600">Manage your product inventory.</p>
+        </div>
+        <div>
+            <a href="{{ route('business.products.archived') }}" class="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-700 hover:text-black border border-[#e8e5e0] hover:border-black px-4 py-2.5 bg-white transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/></svg>
+                View Archived Products
+            </a>
+        </div>
     </div>
 
     <!-- Add Product Form -->
@@ -32,9 +40,14 @@
             </div>
             <div>
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Category</label>
-                <select name="category_id" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                <select name="category_id" id="create_category_id" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                    <option value="" disabled selected>Select Category</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        <option value="{{ $category->id }}"
+                                data-is-apparel="{{ str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
+                                data-is-shoe="{{ str_contains(strtolower($category->name), 'shoe') || str_contains(strtolower($category->name), 'footwear') || str_contains(strtolower($category->name), 'sneaker') || str_contains(strtolower($category->name), 'boot') ? 'true' : 'false' }}">
+                            {{ $category->name }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -58,16 +71,14 @@
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Retail Price (₱)</label>
                 <input type="number" name="retail_price" step="0.01" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
             </div>
-            <div>
-                <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Wholesale Price (₱)</label>
-                <input type="number" name="wholesale_price" step="0.01" min="0" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
-            </div>
+
             <div class="sm:col-span-2">
-                <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Bulk Pricing Tiers</label>
+                <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Bulk Pricing Tiers (Volume Discounts)</label>
                 <div id="bulk-pricing-container" class="space-y-3">
-                    <div class="bulk-pricing-row grid grid-cols-2 gap-3">
-                        <input type="number" name="bulk_min_quantity[]" placeholder="Min Qty (100)" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
-                        <input type="number" name="bulk_max_quantity[]" placeholder="Max Qty (200)" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
+                    <div class="bulk-pricing-row grid grid-cols-3 gap-3">
+                        <input type="number" name="bulk_min_quantity[]" placeholder="Min Qty (e.g. 5)" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
+                        <input type="number" name="bulk_max_quantity[]" placeholder="Max Qty (e.g. 9)" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
+                        <input type="number" name="bulk_discount_percent[]" placeholder="Discount %" min="0" max="100" step="0.01" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
                     </div>
                 </div>
                 <button type="button" onclick="addBulkPricingRow()" class="mt-3 text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">
@@ -76,7 +87,16 @@
             </div>
             <div>
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock</label>
-                <input type="number" name="stock" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                <input type="number" name="stock" id="create_stock" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+            </div>
+            <div id="create_sizes_container" class="hidden">
+                <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Available Sizes (Comma Separated)</label>
+                <input type="text" id="create_sizes" name="sizes" placeholder="e.g. S, M, L, XL" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                <p class="text-[10px] text-gray-500 mt-1">This will automatically create variants for each size.</p>
+                <div id="create_sizes_stock_container" class="mt-3 hidden">
+                    <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock and Price per Size</label>
+                    <div id="create_sizes_stock_inputs" class="space-y-2"></div>
+                </div>
             </div>
             <div class="sm:col-span-2">
                 <button type="submit" class="px-6 py-2.5 bg-[#111] text-white text-[12px] font-semibold tracking-[0.1em] uppercase rounded hover:bg-gray-800 transition-colors">Add Product</button>
@@ -94,14 +114,21 @@
                     <select id="categoryFilter" class="bg-white border border-[#e8e5e0] text-[12px] py-2 px-3 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black">
                         <option value="">All Categories</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}" 
-                                    data-is-clothing="{{ str_contains(strtolower($category->name), 'clothing') || str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') ? 'true' : 'false' }}"
+                            <option value="{{ $category->id }}"
+                                    data-is-apparel="{{ str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
                                     {{ request('category') == $category->id ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
                         @endforeach
                     </select>
-                    <button id="clearFilter" class="text-[11px] text-gray-600 hover:text-black underline transition-colors {{ request('category') ? '' : 'hidden' }}">Clear</button>
+                    <select id="genderFilter" class="bg-white border border-[#e8e5e0] text-[12px] py-2 px-3 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black">
+                        <option value="">All Genders</option>
+                        <option value="men" {{ request('gender') == 'men' ? 'selected' : '' }}>Men</option>
+                        <option value="women" {{ request('gender') == 'women' ? 'selected' : '' }}>Women</option>
+                        <option value="unisex" {{ request('gender') == 'unisex' ? 'selected' : '' }}>Unisex</option>
+                    </select>
+
+                    <button id="clearFilter" class="text-[11px] text-gray-600 hover:text-black underline transition-colors {{ request('category') || request('gender') ? '' : 'hidden' }}">Clear</button>
                 </div>
             </div>
         </div>
@@ -109,9 +136,9 @@
             <div class="w-full max-w-[1200px] mx-auto overflow-x-hidden">
                 <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             @forelse ($products as $product)
-                <div class="bg-white border border-[#e8e5e0] rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="bg-white border border-[#e8e5e0] rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
                     <!-- Product Image -->
-                    <div class="aspect-square bg-gray-100 relative">
+                    <div class="aspect-square bg-gray-100 relative flex-shrink-0">
                         @if($product->image)
                             <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
                         @else
@@ -136,7 +163,7 @@
                     </div>
                     
                     <!-- Product Info -->
-                    <div class="p-4">
+                    <div class="p-4 flex flex-col flex-grow">
                         <h3 class="font-semibold text-[15px] text-gray-900 mb-2 line-clamp-2">{{ $product->name }}</h3>
                         
                         <!-- Category & Gender -->
@@ -146,7 +173,31 @@
                                 {{ ucfirst($product->gender) }}
                             </span>
                         </div>
-                        
+
+                        <!-- Reviews Summary -->
+                        @php
+                            $approvedReviews = $product->reviews->where('status', 'approved');
+                            $reviewsCount = $approvedReviews->count();
+                            $averageRating = $reviewsCount > 0 ? round($approvedReviews->avg('rating'), 1) : null;
+                        @endphp
+                        <div class="flex items-center gap-1.5 mb-3">
+                            @if($reviewsCount > 0)
+                                <div class="flex text-yellow-500">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= round($averageRating))
+                                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                        @else
+                                            <svg class="w-3.5 h-3.5 text-gray-300 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                        @endif
+                                    @endfor
+                                </div>
+                                <span class="text-[11px] font-semibold text-gray-900">{{ number_format($averageRating, 1) }}</span>
+                                <span class="text-[11px] text-gray-500">({{ $reviewsCount }} {{ Str::plural('review', $reviewsCount) }})</span>
+                            @else
+                                <span class="text-[11px] text-gray-400 italic">No reviews yet</span>
+                            @endif
+                        </div>
+
                         <!-- Prices -->
                         <div class="flex items-center gap-3 mb-3">
                             <div>
@@ -167,6 +218,40 @@
                             <p class="text-[14px] font-medium {{ $product->stock == 0 ? 'text-red-600' : 'text-gray-600' }}">{{ $product->stock }} units</p>
                         </div>
                         
+                        <!-- Sizes (Apparel & Shoes) -->
+                        @php
+                            $categoryName = strtolower($product->category->name ?? '');
+                            $isApparel = str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                            $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+                            $showSizes = $isApparel || $isShoe;
+                            if ($isShoe) {
+                                $sizes = collect(range(38, 48));
+                            } elseif ($isApparel && $product->variants) {
+                                $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values();
+                            } else {
+                                $sizes = collect();
+                            }
+                        @endphp
+                        @if($showSizes && $sizes->isNotEmpty())
+                        <div class="mb-3">
+                            <p class="text-[11px] text-gray-500 mb-1">Available Sizes</p>
+                            <div class="flex flex-wrap gap-1">
+                                @foreach($sizes as $size)
+                                @php
+                                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                                    $variantPrice = $variant ? $variant->price : null;
+                                @endphp
+                                <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium border border-gray-200 rounded text-gray-600 bg-gray-50">
+                                    {{ $size }}
+                                    @if($variantPrice)
+                                        <span class="ml-1 text-green-600 font-semibold">(₱{{ number_format($variantPrice, 2) }})</span>
+                                    @endif
+                                </span>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                        
                         <!-- Discount Tiers -->
                         @if(($product->discountTiers ?? collect())->count() > 0)
                         <div class="mb-4">
@@ -186,7 +271,7 @@
                         @endif
                         
                         <!-- Actions -->
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 mt-auto">
                             <button onclick="openEditModal({{ $product->id }})" class="flex-1 bg-blue-600 text-white text-[11px] font-semibold tracking-[0.1em] uppercase py-2 px-3 rounded hover:bg-blue-700 transition-colors">
                                 Update
                             </button>
@@ -235,7 +320,11 @@
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Category</label>
                         <select id="edit_category_id" name="category_id" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                             @foreach($categories as $category)
-                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                <option value="{{ $category->id }}"
+                                        data-is-apparel="{{ str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
+                                        data-is-shoe="{{ str_contains(strtolower($category->name), 'shoe') || str_contains(strtolower($category->name), 'footwear') || str_contains(strtolower($category->name), 'sneaker') || str_contains(strtolower($category->name), 'boot') ? 'true' : 'false' }}">
+                                    {{ $category->name }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -259,13 +348,28 @@
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Retail Price (₱)</label>
                         <input type="number" id="edit_retail_price" name="retail_price" step="0.01" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                     </div>
-                    <div>
-                        <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Wholesale Price (₱)</label>
-                        <input type="number" id="edit_wholesale_price" name="wholesale_price" step="0.01" min="0" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
-                    </div>
+
                     <div>
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock</label>
                         <input type="number" id="edit_stock" name="stock" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                    </div>
+                    <div id="edit_sizes_container" class="hidden">
+                        <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Available Sizes (Comma Separated)</label>
+                        <input type="text" id="edit_sizes" name="sizes" placeholder="e.g. S, M, L, XL" class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                        <p class="text-[10px] text-gray-500 mt-1">This will automatically create variants for each size.</p>
+                        <div id="edit_sizes_stock_container" class="mt-3 hidden">
+                            <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock and Price per Size</label>
+                            <div id="edit_sizes_stock_inputs" class="space-y-2"></div>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Bulk Pricing Tiers (Volume Discounts)</label>
+                        <div id="edit-bulk-pricing-container" class="space-y-3">
+                            <!-- Dynamic rows will be inserted here via JS -->
+                        </div>
+                        <button type="button" onclick="addEditBulkPricingRow()" class="mt-3 text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-800 hover:text-black transition-colors underline underline-offset-4">
+                            + Add Bulk Tier
+                        </button>
                     </div>
                     <div>
                         <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Product Image</label>
@@ -283,322 +387,6 @@
 @endsection
 
 @push('scripts')
-<style>
-/* Uniform card sizes for all layouts */
-#productsGrid > div {
-    min-height: 480px !important;
-    max-height: 480px !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-#productsGrid .aspect-square {
-    aspect-ratio: 1/1 !important;
-    min-height: 160px !important;
-    max-height: 160px !important;
-    flex-shrink: 0 !important;
-}
-
-#productsGrid .p-4 {
-    padding: 1rem !important;
-    flex-grow: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-#productsGrid h3 {
-    font-size: 15px !important;
-    line-height: 1.4 !important;
-    margin-bottom: 0.5rem !important;
-    flex-shrink: 0 !important;
-}
-
-#productsGrid .flex.items-center.gap-2 {
-    margin-bottom: 0.75rem !important;
-    flex-shrink: 0 !important;
-}
-
-#productsGrid .flex.items-center.gap-3 {
-    margin-bottom: 0.75rem !important;
-    flex-shrink: 0 !important;
-}
-
-#productsGrid .mb-3 {
-    margin-bottom: 0.75rem !important;
-    flex-shrink: 0 !important;
-}
-
-#productsGrid .mb-4 {
-    margin-bottom: 1rem !important;
-    flex-grow: 1 !important;
-}
-
-#productsGrid .flex.gap-2 {
-    margin-top: auto !important;
-    flex-shrink: 0 !important;
-}
-
-/* Consistent grid layout for all states - uniform across all categories */
-#productsGrid {
-    gap: 1rem !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-}
-
-#productsGrid > div {
-    min-height: 480px !important;
-    max-height: 480px !important;
-    min-width: 220px !important;
-    max-width: 300px !important;
-    transform: none !important;
-    margin: 0 !important;
-    box-sizing: border-box !important;
-}
-
-/* Ensure buttons are always visible in clothing layout */
-#productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 .flex.gap-2 {
-    margin-top: auto !important;
-    flex-shrink: 0 !important;
-    padding-top: 0.5rem !important;
-    display: flex !important;
-    visibility: visible !important;
-}
-
-#productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 button {
-    font-size: 11px !important;
-    padding: 6px 8px !important;
-    min-width: 60px !important;
-    white-space: nowrap !important;
-    display: inline-block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-/* Make sure all button containers are visible */
-#productsGrid .flex.gap-2 {
-    display: flex !important;
-    visibility: visible !important;
-}
-
-#productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 .mb-4 {
-    margin-bottom: 0.5rem !important;
-    flex-grow: 0 !important;
-}
-
-/* Adjust grid for wider cards on larger screens */
-@media (min-width: 1280px) {
-    #productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 {
-        grid-template-columns: repeat(6, minmax(280px, 1fr)) !important;
-    }
-}
-
-@media (min-width: 1536px) {
-    #productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 {
-        grid-template-columns: repeat(7, minmax(280px, 1fr)) !important;
-    }
-}
-</style>
-<script>
-function addBulkPricingRow() {
-    const container = document.getElementById('bulk-pricing-container');
-    const newRow = document.createElement('div');
-    newRow.className = 'bulk-pricing-row grid grid-cols-2 gap-3';
-    newRow.innerHTML = `
-        <input type="number" name="bulk_min_quantity[]" placeholder="Min Qty" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
-        <input type="number" name="bulk_max_quantity[]" placeholder="Max Qty" min="1" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400">
-    `;
-    container.appendChild(newRow);
-}
-
-function openEditModal(productId) {
-    console.log('Opening edit modal for product:', productId);
-    
-    // Fetch product data via AJAX
-    fetch(`/business/products/${productId}/edit`)
-        .then(response => {
-            console.log('Response status:', response.status);
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Product data:', data);
-            document.getElementById('editProductId').value = data.id;
-            document.getElementById('edit_name').value = data.name;
-            document.getElementById('edit_description').value = data.description || '';
-            document.getElementById('edit_category_id').value = data.category_id;
-            document.getElementById('edit_status').value = data.status;
-            document.getElementById('edit_gender').value = data.gender;
-            document.getElementById('edit_retail_price').value = data.retail_price;
-            document.getElementById('edit_wholesale_price').value = data.wholesale_price || '';
-            document.getElementById('edit_stock').value = data.stock;
-            document.getElementById('editForm').action = `/business/products/${data.id}`;
-            
-            document.getElementById('editModal').classList.remove('hidden');
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error loading product data: ' + error.message);
-        });
-}
-
-function closeEditModal() {
-    document.getElementById('editModal').classList.add('hidden');
-}
-
-function archiveProduct(productId, button) {
-    if (!confirm('Are you sure you want to archive this product?')) return;
-
-    const token = document.querySelector('meta[name="csrf-token"]');
-    const csrfToken = token ? token.content : '';
-
-    fetch(`/business/products/${productId}/archive`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Remove the card from the grid
-            const card = button.closest('.bg-white');
-            card.style.transition = 'opacity 0.3s';
-            card.style.opacity = '0';
-            setTimeout(() => card.remove(), 300);
-        } else {
-            alert('Error archiving product');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error archiving product');
-    });
-}
-
-// Function to update grid layout - uniform across all categories
-function updateGridLayout(categoryId) {
-    const productsGrid = document.getElementById('productsGrid');
-    if (!productsGrid) return;
-    
-    // Keep uniform layout for all categories
-    productsGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
-}
-
-// Category filter AJAX
-document.getElementById('categoryFilter').addEventListener('change', function() {
-    const categoryId = this.value;
-    const clearBtn = document.getElementById('clearFilter');
-    
-    // Show/hide clear button
-    if (categoryId) {
-        clearBtn.classList.remove('hidden');
-    } else {
-        clearBtn.classList.add('hidden');
-    }
-    
-    // Update grid layout immediately
-    updateGridLayout(categoryId);
-    
-    // Show loading state
-    const currentGrid = document.getElementById('productsGrid');
-    if (currentGrid) {
-        currentGrid.style.opacity = '0.5';
-    }
-    
-    // Fetch filtered products
-    fetch(`{{ route('business.products.filter') }}?category=${categoryId}`, {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'text/html'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.text();
-    })
-    .then(html => {
-        // Create a temporary div to parse the response
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        
-        // Extract the products grid from the response
-        const newProductsGrid = tempDiv.querySelector('#productsGrid');
-        
-        if (newProductsGrid && currentGrid) {
-            currentGrid.innerHTML = newProductsGrid.innerHTML;
-            // Reapply the grid layout after content replacement
-            updateGridLayout(categoryId);
-            currentGrid.style.opacity = '1';
-        } else {
-            console.error('Could not find grid elements');
-            if (currentGrid) currentGrid.style.opacity = '1';
-        }
-    })
-    .catch(error => {
-        console.error('Error filtering products:', error);
-        if (currentGrid) currentGrid.style.opacity = '1';
-        alert('Error filtering products. Please try again.');
-    });
-});
-
-// Clear filter
-document.getElementById('clearFilter').addEventListener('click', function(e) {
-    e.preventDefault();
-    document.getElementById('categoryFilter').value = '';
-    this.classList.add('hidden');
-    
-    // Reset grid layout to normal
-    updateGridLayout('');
-    
-    // Show loading state
-    const currentGrid = document.getElementById('productsGrid');
-    if (currentGrid) {
-        currentGrid.style.opacity = '0.5';
-    }
-    
-    // Fetch all products
-    fetch(`{{ route('business.products.filter') }}`, {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'text/html'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.text();
-    })
-    .then(html => {
-        // Create a temporary div to parse the response
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        
-        // Extract the products grid from the response
-        const newProductsGrid = tempDiv.querySelector('#productsGrid');
-        
-        if (newProductsGrid && currentGrid) {
-            currentGrid.innerHTML = newProductsGrid.innerHTML;
-            // Reapply the grid layout after content replacement (normal layout)
-            updateGridLayout('');
-            currentGrid.style.opacity = '1';
-        } else {
-            console.error('Could not find grid elements');
-            if (currentGrid) currentGrid.style.opacity = '1';
-        }
-    })
-    .catch(error => {
-        console.error('Error clearing filter:', error);
-        if (currentGrid) currentGrid.style.opacity = '1';
-        alert('Error clearing filter. Please try again.');
-    });
-});
-</script>
+<script src="{{ asset('js/businessProducts.js') }}" defer></script>
+<link rel="stylesheet" href="{{ asset('css/businessProducts.css') }}">
 @endpush

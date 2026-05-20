@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Shipment;
 use App\Models\Payment;
-use App\Models\Wallet;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\DiscountEngine;
 use App\Services\ShippingCalculator;
 use App\Services\InventoryManager;
@@ -22,6 +23,54 @@ class CheckoutController extends Controller
 {
     public function index()
     {
+        if (session()->has('buy_now')) {
+            $buyNowData = session('buy_now');
+            
+            $product = Product::with(['category', 'variants', 'business.businessProfile'])
+                ->findOrFail($buyNowData['product_id']);
+                
+            $quantity = $buyNowData['quantity'];
+            $size = $buyNowData['size'];
+            
+            // Build a temporary Cart & CartItem
+            $cart = new Cart([
+                'user_id' => auth()->id(),
+                'type' => 'retail',
+                'total' => 0,
+                'discount_total' => 0,
+                'shipping_total' => 0
+            ]);
+            
+            $itemType = DiscountEngine::findTier($product, $quantity) || ($product->is_wholesale_enabled && $product->wholesale_price > 0 && DiscountEngine::validateMoq($product, $quantity, 'wholesale')) ? 'wholesale' : 'retail';
+            $calc = DiscountEngine::calculate($product, $quantity, $itemType, $size);
+            $shippingEstimate = ShippingCalculator::calculateForProduct($product, ($product->weight ?? 0.5) * $quantity);
+            
+            $item = new CartItem([
+                'product_id' => $product->id,
+                'size' => $size,
+                'quantity' => $quantity,
+                'unit_price' => $calc['unit_price'],
+                'discount_amount' => $calc['discount_amount'],
+                'shipping_estimate' => $shippingEstimate,
+                'type' => $itemType
+            ]);
+            
+            // Link them in-memory
+            $item->setRelation('product', $product);
+            
+            if ($size) {
+                $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                if ($variant) {
+                    $item->setRelation('variant', $variant);
+                }
+            }
+            
+            $cart->setRelation('items', collect([$item]));
+            $cart->recalculate();
+            
+            return view('checkout.index', compact('cart'));
+        }
+
         $cart = Cart::where('user_id', auth()->id())
             ->with('items.product.business.businessProfile', 'items.variant')
             ->first();
@@ -32,9 +81,7 @@ class CheckoutController extends Controller
 
         $cart->recalculate();
 
-        $wallet = Wallet::where('user_id', auth()->id())->first();
-
-        return view('checkout.index', compact('cart', 'wallet'));
+        return view('checkout.index', compact('cart'));
     }
 
     public function store(Request $request)
@@ -45,36 +92,81 @@ class CheckoutController extends Controller
             'shipping_address.city' => 'required|string',
             'shipping_address.state' => 'required|string',
             'shipping_address.postal' => 'required|string',
-            'shipping_address.country' => 'required|string',
+            'shipping_address.contact' => 'required|string',
             'billing_address' => 'nullable|array',
-            'payment_method' => 'required|in:stripe,paypal,bank_transfer,cod,wallet',
+            'payment_method' => 'required|in:stripe,paypal,bank_transfer,cod',
             'notes' => 'nullable|string',
         ]);
 
-        $cart = Cart::where('user_id', auth()->id())
-            ->with('items.product')
-            ->first();
+        $isBuyNow = session()->has('buy_now');
+        
+        if ($isBuyNow) {
+            $buyNowData = session('buy_now');
+            $product = Product::with(['variants', 'business.businessProfile'])->findOrFail($buyNowData['product_id']);
+            $quantity = $buyNowData['quantity'];
+            $size = $buyNowData['size'];
+            
+            $itemType = DiscountEngine::findTier($product, $quantity) || ($product->is_wholesale_enabled && $product->wholesale_price > 0 && DiscountEngine::validateMoq($product, $quantity, 'wholesale')) ? 'wholesale' : 'retail';
+            $calc = DiscountEngine::calculate($product, $quantity, $itemType, $size);
+            $shippingEstimate = ShippingCalculator::calculateForProduct($product, ($product->weight ?? 0.5) * $quantity);
+            
+            $item = new CartItem([
+                'product_id' => $product->id,
+                'size' => $size,
+                'quantity' => $quantity,
+                'unit_price' => $calc['unit_price'],
+                'discount_amount' => $calc['discount_amount'],
+                'shipping_estimate' => $shippingEstimate,
+                'type' => $itemType
+            ]);
+            $item->setRelation('product', $product);
+            $items = collect([$item]);
+        } else {
+            $cart = Cart::where('user_id', auth()->id())
+                ->with('items.product.variants')
+                ->first();
 
-        if (!$cart || $cart->items->isEmpty()) {
-            return back()->with('error', 'Cart is empty.');
+            if (!$cart || $cart->items->isEmpty()) {
+                return back()->with('error', 'Cart is empty.');
+            }
+            $items = $cart->items;
         }
 
         DB::beginTransaction();
         try {
-            $grouped = $cart->items->groupBy(fn($item) => $item->product->business_id);
+            $grouped = $items->groupBy(fn($item) => $item->product->business_id);
             $orders = [];
 
-            foreach ($grouped as $businessId => $items) {
+            foreach ($grouped as $businessId => $groupedItems) {
                 $subtotal = 0;
                 $discountTotal = 0;
                 $shippingTotal = 0;
 
-                foreach ($items as $item) {
-                    $product = $item->product;
-                    $calc = DiscountEngine::calculate($product, $item->quantity, $item->type);
+                // Validate stock for all items before creating order
+                foreach ($groupedItems as $item) {
+                    $itemProduct = $item->product;
+                    $itemSize = $item->size;
+
+                    if ($itemSize) {
+                        $variant = $itemProduct->variants->first(fn($v) => data_get($v->attributes, 'size') == $itemSize);
+
+                        if (!$variant || $variant->stock < $item->quantity) {
+                            $available = $variant ? $variant->stock : 0;
+                            throw new \Exception("Insufficient stock for {$itemProduct->name} (size {$itemSize}). Available: {$available}");
+                        }
+                    } else {
+                        if ($itemProduct->stock < $item->quantity) {
+                            throw new \Exception("Insufficient stock for {$itemProduct->name}. Available: {$itemProduct->stock}");
+                        }
+                    }
+                }
+
+                foreach ($groupedItems as $item) {
+                    $itemProduct = $item->product;
+                    $calc = DiscountEngine::calculate($itemProduct, $item->quantity, $item->type, $item->size);
                     $shipping = ShippingCalculator::calculateForProduct(
-                        $product,
-                        ($product->weight ?? 0.5) * $item->quantity
+                        $itemProduct,
+                        ($itemProduct->weight ?? 0.5) * $item->quantity
                     );
 
                     $subtotal += $calc['base_price'] * $item->quantity;
@@ -87,10 +179,12 @@ class CheckoutController extends Controller
                 $total = ($subtotal - $discountTotal) + $shippingTotal + $platformFee;
                 $commission = ($subtotal - $discountTotal) * ($commissionRate / 100);
 
+                $orderType = $groupedItems->contains(fn($item) => $item->type === 'wholesale') ? 'b2b' : 'retail';
+
                 $order = Order::create([
                     'buyer_id' => auth()->id(),
                     'business_id' => $businessId,
-                    'type' => $cart->type === 'wholesale' ? 'b2b' : 'retail',
+                    'type' => $orderType,
                     'status' => Order::STATUS_PENDING,
                     'subtotal' => $subtotal,
                     'discount_total' => $discountTotal,
@@ -104,24 +198,40 @@ class CheckoutController extends Controller
                     'estimated_delivery_date' => ShippingCalculator::estimateDeliveryDate(),
                 ]);
 
-                foreach ($items as $item) {
-                    $product = $item->product;
-                    $calc = DiscountEngine::calculate($product, $item->quantity, $item->type);
+                foreach ($groupedItems as $item) {
+                    $itemProduct = $item->product;
+                    $itemSize = $item->size;
+                    $calc = DiscountEngine::calculate($itemProduct, $item->quantity, $item->type, $itemSize);
+
+                    // Find variant if size is selected
+                    $variant = null;
+                    if ($itemSize) {
+                        $variant = $itemProduct->variants->first(fn($v) => data_get($v->attributes, 'size') == $itemSize);
+                    }
 
                     OrderItem::create([
                         'order_id' => $order->id,
-                        'product_id' => $product->id,
-                        'variant_id' => $item->variant_id,
-                        'variant_name' => $item->variant ? $item->variant->name : null,
+                        'product_id' => $itemProduct->id,
+                        'variant_id' => $variant ? $variant->id : null,
+                        'variant_name' => $variant ? $variant->name : null,
                         'quantity' => $item->quantity,
                         'price' => $calc['unit_price'],
                         'original_price' => $calc['base_price'],
                         'discount_amount' => $calc['discount_amount'],
                         'shipping_fee' => ShippingCalculator::calculateForProduct(
-                            $product,
-                            ($product->weight ?? 0.5) * $item->quantity
+                            $itemProduct,
+                            ($itemProduct->weight ?? 0.5) * $item->quantity
                         ),
                     ]);
+
+                    // Deduct stock from variant or product
+                    if ($variant) {
+                        $variant->stock -= $item->quantity;
+                        $variant->save();
+                    } else {
+                        $itemProduct->stock -= $item->quantity;
+                        $itemProduct->save();
+                    }
                 }
 
                 Shipment::create([
@@ -133,13 +243,7 @@ class CheckoutController extends Controller
 
                 $orders[] = $order;
 
-                if ($validated['payment_method'] === 'wallet') {
-                    $wallet = Wallet::where('user_id', auth()->id())->first();
-                    $payment = PaymentProcessor::processWalletPayment($order, $wallet, $total);
-                    if (!$payment) {
-                        throw new \Exception('Insufficient wallet balance.');
-                    }
-                } elseif (in_array($validated['payment_method'], ['cod', 'bank_transfer'])) {
+                if (in_array($validated['payment_method'], ['cod', 'bank_transfer'])) {
                     Payment::create([
                         'order_id' => $order->id,
                         'user_id' => auth()->id(),
@@ -162,8 +266,14 @@ class CheckoutController extends Controller
                 }
             }
 
-            $cart->items()->delete();
-            $cart->recalculate();
+            if ($isBuyNow) {
+                // Clear the buy now session
+                session()->forget('buy_now');
+            } else {
+                // Clear normal cart
+                $cart->items()->delete();
+                $cart->recalculate();
+            }
 
             DB::commit();
 
@@ -184,21 +294,13 @@ class CheckoutController extends Controller
 
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
-            'method' => 'required|in:stripe,paypal,bank_transfer,wallet',
+            'method' => 'required|in:stripe,paypal,bank_transfer',
         ]);
 
         $amount = (float) $request->amount;
         $method = $request->method;
 
-        if ($method === 'wallet') {
-            $wallet = Wallet::where('user_id', auth()->id())->first();
-            $payment = PaymentProcessor::processWalletPayment($order, $wallet, $amount);
-            if (!$payment) {
-                return back()->with('error', 'Insufficient wallet balance.');
-            }
-        } else {
-            PaymentProcessor::process($order, $method, $amount);
-        }
+        PaymentProcessor::process($order, $method, $amount);
 
         NotificationService::notifyPaymentConfirmation(auth()->user(), $order->id, $amount);
 

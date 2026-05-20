@@ -13,29 +13,46 @@ use App\Models\Setting;
 use App\Models\BusinessProfile;
 use App\Models\Review;
 use App\Models\TransactionLog;
+use App\Models\ContactMessage;
+use App\Events\UserApproved;
 
 class AdminController extends Controller
 {
+    public function messages()
+    {
+        $messages = ContactMessage::with('business.businessProfile')->orderByDesc('created_at')->paginate(50);
+        return view('admin.messages', compact('messages'));
+    }
+
+    public function updateMessageStatus(Request $request, ContactMessage $message)
+    {
+        $request->validate(['status' => 'required|in:unread,read']);
+        $message->update(['status' => $request->status]);
+        return back()->with('success', 'Message status updated.');
+    }
+
     public function index()
     {
-        $totalUsers = User::whereIn('role', [User::ROLE_BUSINESS, User::ROLE_BUYER])->count();
+        $totalUsers = User::where('role', '!=', User::ROLE_ADMIN)->count();
         $totalBusinesses = User::where('role', User::ROLE_BUSINESS)->count();
-        $totalBuyers = User::where('role', User::ROLE_BUYER)->count();
         $totalProducts = Product::count();
         $retailOrders = Order::where('type', 'retail')->count();
         $b2bOrders = Order::where('type', 'b2b')->count();
         $totalRevenue = Order::sum('commission') + Order::sum('platform_fee');
 
-        $users = User::whereIn('role', [User::ROLE_BUSINESS, User::ROLE_BUYER])
-            ->orderBy('role')->orderBy('name')->get();
+        $users = User::where('role', User::ROLE_BUSINESS)
+            ->orderBy('name')->get();
 
         $openDisputes = Dispute::where('status', 'open')->count();
         $pendingVerifications = BusinessProfile::whereNull('verified_at')->count();
 
+        $commissionRate = Setting::get('commission_rate', '10');
+        $platformFee = Setting::get('platform_fee', '2.50');
+
         return view('admin.dashboard', compact(
-            'users', 'totalUsers', 'totalBusinesses', 'totalBuyers',
+            'users', 'totalUsers', 'totalBusinesses',
             'totalProducts', 'retailOrders', 'b2bOrders', 'totalRevenue',
-            'openDisputes', 'pendingVerifications'
+            'openDisputes', 'pendingVerifications', 'commissionRate', 'platformFee'
         ));
     }
 
@@ -101,12 +118,12 @@ class AdminController extends Controller
     public function orders()
     {
         $retailOrders = Order::where('type', 'retail')
-            ->with('buyer', 'business', 'items.product')
+            ->with('buyer', 'business', 'items.product', 'payments')
             ->orderBy('created_at', 'desc')
             ->get();
 
         $b2bOrders = Order::where('type', 'b2b')
-            ->with('buyer', 'business', 'items.product')
+            ->with('buyer', 'business', 'items.product', 'payments')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -115,7 +132,22 @@ class AdminController extends Controller
 
     public function updateOrderStatus(Request $request, Order $order)
     {
-        $order->update(['status' => $request->status]);
+        $newStatus = $request->status;
+        $currentStatus = $order->status;
+
+        $allowedTransitions = [
+            'pending' => ['processing', 'cancelled'],
+            'processing' => ['shipped', 'cancelled'],
+            'shipped' => [],
+            'delivered' => [],
+            'cancelled' => [],
+        ];
+
+        if (!in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
+            return back()->with('error', 'Invalid status transition.');
+        }
+
+        $order->update(['status' => $newStatus]);
         return back()->with('success', 'Order status updated.');
     }
 
@@ -148,22 +180,31 @@ class AdminController extends Controller
 
     public function users()
     {
-        $buyers = User::where('role', User::ROLE_BUYER)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $businesses = User::where('role', User::ROLE_BUSINESS)
+        $businesses = User::where('role', '!=', User::ROLE_ADMIN)
             ->with('businessProfile')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.users', compact('buyers', 'businesses'));
+        return view('admin.users', compact('businesses'));
     }
 
     public function toggleUserStatus(Request $request, User $user)
     {
         $user->update(['status' => $request->status]);
         return back()->with('success', 'User status updated.');
+    }
+
+    public function approveUser(User $user)
+    {
+        event(new UserApproved($user));
+
+        return back()->with('success', 'User account approved and verification code sent.');
+    }
+
+    public function rejectUser(User $user)
+    {
+        $user->update(['status' => User::STATUS_REJECTED]);
+        return back()->with('success', 'User account rejected.');
     }
 
     public function analytics()
@@ -177,13 +218,8 @@ class AdminController extends Controller
             ->orderBy('order_items_count', 'desc')
             ->first();
 
-        $mostActiveBuyer = User::where('role', User::ROLE_BUYER)
-            ->withCount('ordersAsBuyer')
-            ->orderBy('orders_as_buyer_count', 'desc')
-            ->first();
-
         $totalOrders = Order::count();
-        $totalUsers = User::whereIn('role', [User::ROLE_BUSINESS, User::ROLE_BUYER])->count();
+        $totalUsers = User::where('role', User::ROLE_BUSINESS)->count();
         $conversionRate = $totalUsers > 0 ? round(($totalOrders / $totalUsers) * 100, 1) : 0;
 
         $retailGrowth = Order::where('type', 'retail')->count();
@@ -203,7 +239,7 @@ class AdminController extends Controller
         $topCategories = \App\Services\RecommendationEngine::bestSellingCategories(10);
 
         return view('admin.analytics', compact(
-            'topBusiness', 'topProduct', 'mostActiveBuyer',
+            'topBusiness', 'topProduct',
             'conversionRate', 'retailGrowth', 'b2bGrowth',
             'totalSales', 'totalCommission', 'activeBusinesses',
             'pendingDisputes', 'monthlyRevenue', 'topCategories'

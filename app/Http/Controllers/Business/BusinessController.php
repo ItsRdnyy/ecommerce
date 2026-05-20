@@ -14,13 +14,36 @@ use App\Models\ProductVariant;
 use App\Models\InventoryLog;
 use App\Models\PreorderQueue;
 use App\Models\Notification;
+use App\Models\BusinessProfile;
+use App\Models\ContactMessage;
 use App\Services\InventoryManager;
 use App\Services\NotificationService;
 use App\Services\OrderStateMachine;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class BusinessController extends Controller
 {
+    public function messages()
+    {
+        $messages = ContactMessage::where('business_id', auth()->id())
+            ->orderByDesc('created_at')
+            ->paginate(50);
+        return view('business.messages', compact('messages'));
+    }
+
+    public function updateMessageStatus(Request $request, ContactMessage $message)
+    {
+        if ($message->business_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate(['status' => 'required|in:unread,read']);
+        $message->update(['status' => $request->status]);
+        return back()->with('success', 'Message status updated.');
+    }
+
     public function index()
     {
         $business = auth()->user()->businessProfile;
@@ -64,6 +87,26 @@ class BusinessController extends Controller
 
         $wholesaleListings = Product::where('business_id', $businessId)->where('wholesale_price', '>', 0)->count();
 
+        $recentOrders = Order::where('business_id', $businessId)
+            ->latest()
+            ->take(3)
+            ->get();
+
+        $dailyRevenue = Order::where('business_id', $businessId)
+            ->where('status', '!=', Order::STATUS_CANCELLED)
+            ->selectRaw('DATE(created_at) as date, SUM(total) as revenue')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // New: Orders count per day for chart
+        $monthlyOrders = Order::where('business_id', $businessId)
+            ->where('status', '!=', Order::STATUS_CANCELLED)
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
         return view('business.dashboard', compact(
             'business',
             'totalProducts',
@@ -83,7 +126,9 @@ class BusinessController extends Controller
             'bestSellingProduct',
             'soloBuyerCustomers',
             'businessCustomers',
-            'wholesaleListings'
+            'wholesaleListings',
+            'recentOrders',
+            'dailyRevenue', 'monthlyOrders'
         ));
     }
 
@@ -92,7 +137,7 @@ class BusinessController extends Controller
         $businessId = auth()->id();
         $query = Product::where('business_id', $businessId)
             ->whereIn('status', ['active', 'flagged'])
-            ->with('category');
+            ->with(['category', 'variants', 'reviews']);
             
         // Filter by category if selected
         if ($request->filled('category')) {
@@ -109,21 +154,26 @@ class BusinessController extends Controller
         $businessId = auth()->id();
         $query = Product::where('business_id', $businessId)
             ->whereIn('status', ['active', 'flagged'])
-            ->with('category');
-            
+            ->with(['category', 'variants', 'reviews']);
+
         // Filter by category if selected
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
-        
+
+        // Filter by gender if selected
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
+        }
+
         $products = $query->latest()->get();
         $categories = Category::all();
-        
+
         // If AJAX request, return only the products grid
         if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             return view('business.products_grid', compact('products'))->render();
         }
-        
+
         return view('business.products', compact('products', 'categories'));
     }
 
@@ -134,7 +184,6 @@ class BusinessController extends Controller
             'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'retail_price' => 'required|numeric|min:0',
-            'wholesale_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'status' => 'required|in:active,inactive,flagged',
             'gender' => 'required|in:men,women,unisex',
@@ -143,6 +192,11 @@ class BusinessController extends Controller
             'bulk_min_quantity.*' => 'nullable|integer|min:1',
             'bulk_max_quantity' => 'array',
             'bulk_max_quantity.*' => 'nullable|integer|min:1',
+            'bulk_discount_percent' => 'array',
+            'bulk_discount_percent.*' => 'nullable|numeric|min:0|max:100',
+            'sizes' => 'nullable|string|max:255',
+            'sizes_stock' => 'nullable|array',
+            'sizes_stock.*' => 'nullable|integer|min:0',
         ]);
 
         $imagePath = null;
@@ -156,21 +210,53 @@ class BusinessController extends Controller
             'description' => $validated['description'] ?? '',
             'category_id' => $validated['category_id'],
             'retail_price' => $validated['retail_price'],
-            'wholesale_price' => $validated['wholesale_price'] ?? null,
+            'wholesale_price' => null,
             'stock' => $validated['stock'],
             'status' => $validated['status'],
             'gender' => $validated['gender'],
             'image' => $imagePath,
         ]);
 
-        // Save bulk pricing tiers
+        // Save bulk pricing tiers as active DiscountTiers and BulkPricing
         if ($request->has('bulk_min_quantity')) {
             foreach ($request->bulk_min_quantity as $key => $minQty) {
-                if (!empty($minQty)) {
+                $percent = $request->bulk_discount_percent[$key] ?? 0;
+                if (!empty($minQty) && $percent > 0) {
+                    // Create discount tier
+                    DiscountTier::create([
+                        'business_id' => auth()->id(),
+                        'product_id' => $product->id,
+                        'min_quantity' => $minQty,
+                        'max_quantity' => $request->bulk_max_quantity[$key] ?? null,
+                        'discount_percent' => $percent,
+                    ]);
+
+                    // Also save for legacy database structure compatibility
                     BulkPricing::create([
                         'product_id' => $product->id,
                         'min_quantity' => $minQty,
                         'max_quantity' => $request->bulk_max_quantity[$key] ?? null,
+                    ]);
+                }
+            }
+        }
+
+        // Create variants for sizes if provided
+        if ($request->filled('sizes')) {
+            $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));
+            $sizesStock = $request->input('sizes_stock', []);
+            $sizesPrice = $request->input('sizes_price', []);
+
+            foreach ($sizes as $size) {
+                if (!empty($size)) {
+                    $stock = $sizesStock[$size] ?? 0;
+                    $price = isset($sizesPrice[$size]) && $sizesPrice[$size] !== '' ? floatval($sizesPrice[$size]) : null;
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'name' => $product->name . ' - ' . $size,
+                        'attributes' => ['size' => $size],
+                        'stock' => $stock,
+                        'price' => $price,
                     ]);
                 }
             }
@@ -184,6 +270,18 @@ class BusinessController extends Controller
         if ($product->business_id !== auth()->id()) {
             abort(403);
         }
+
+        $product->load(['variants', 'discountTiers']);
+        $sizes = $product->variants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->unique()->values()->toArray();
+        $product->sizes_string = implode(', ', $sizes);
+        $product->variants = $product->variants->map(function($variant) {
+            return [
+                'id' => $variant->id,
+                'attributes' => $variant->attributes,
+                'stock' => $variant->stock,
+                'price' => $variant->price,
+            ];
+        });
 
         return response()->json($product);
     }
@@ -199,11 +297,21 @@ class BusinessController extends Controller
             'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'retail_price' => 'required|numeric|min:0',
-            'wholesale_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'status' => 'required|in:active,inactive,flagged',
             'gender' => 'required|in:men,women,unisex',
             'image' => 'nullable|file|max:10240',
+            'sizes' => 'nullable|string|max:255',
+            'sizes_stock' => 'nullable|array',
+            'sizes_stock.*' => 'nullable|integer|min:0',
+            'sizes_price' => 'nullable|array',
+            'sizes_price.*' => 'nullable|numeric|min:0',
+            'bulk_min_quantity' => 'nullable|array',
+            'bulk_min_quantity.*' => 'nullable|integer|min:1',
+            'bulk_max_quantity' => 'nullable|array',
+            'bulk_max_quantity.*' => 'nullable|integer|min:1',
+            'bulk_discount_percent' => 'nullable|array',
+            'bulk_discount_percent.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $updateData = [
@@ -211,7 +319,7 @@ class BusinessController extends Controller
             'description' => $validated['description'] ?? '',
             'category_id' => $validated['category_id'],
             'retail_price' => $validated['retail_price'],
-            'wholesale_price' => $validated['wholesale_price'] ?? null,
+            'wholesale_price' => null,
             'stock' => $validated['stock'],
             'status' => $validated['status'],
             'gender' => $validated['gender'],
@@ -223,6 +331,72 @@ class BusinessController extends Controller
         }
 
         $product->update($updateData);
+
+        // Update bulk pricing tiers as active DiscountTiers and BulkPricing
+        $product->discountTiers()->delete();
+        BulkPricing::where('product_id', $product->id)->delete();
+
+        if ($request->has('bulk_min_quantity')) {
+            foreach ($request->bulk_min_quantity as $key => $minQty) {
+                $percent = $request->bulk_discount_percent[$key] ?? 0;
+                if (!empty($minQty) && $percent > 0) {
+                    // Create discount tier
+                    DiscountTier::create([
+                        'business_id' => auth()->id(),
+                        'product_id' => $product->id,
+                        'min_quantity' => $minQty,
+                        'max_quantity' => $request->bulk_max_quantity[$key] ?? null,
+                        'discount_percent' => $percent,
+                    ]);
+
+                    // Also save for legacy database structure compatibility
+                    BulkPricing::create([
+                        'product_id' => $product->id,
+                        'min_quantity' => $minQty,
+                        'max_quantity' => $request->bulk_max_quantity[$key] ?? null,
+                    ]);
+                }
+            }
+        }
+
+        if ($request->filled('sizes')) {
+            $sizes = array_filter(array_map('trim', explode(',', $request->sizes)));
+            $sizesStock = $request->input('sizes_stock', []);
+            $sizesPrice = $request->input('sizes_price', []);
+            $existingVariants = $product->variants()->get();
+            $existingSizes = $existingVariants->map(fn($v) => $v->attributes['size'] ?? null)->filter()->values()->toArray();
+
+            // Update existing variants stock and price
+            foreach ($existingVariants as $variant) {
+                $size = $variant->attributes['size'] ?? null;
+                if ($size && in_array($size, $sizes)) {
+                    $variant->stock = $sizesStock[$size] ?? 0;
+                    $variant->price = isset($sizesPrice[$size]) && $sizesPrice[$size] !== '' ? floatval($sizesPrice[$size]) : null;
+                    $variant->save();
+                }
+            }
+
+            // Create new variants for new sizes
+            $newSizes = array_diff($sizes, $existingSizes);
+            foreach ($newSizes as $size) {
+                if (!empty($size)) {
+                    $price = isset($sizesPrice[$size]) && $sizesPrice[$size] !== '' ? floatval($sizesPrice[$size]) : null;
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'name' => $product->name . ' - ' . $size,
+                        'attributes' => ['size' => $size],
+                        'stock' => $sizesStock[$size] ?? 0,
+                        'price' => $price,
+                    ]);
+                }
+            }
+
+            // Delete variants for removed sizes
+            $removedSizes = array_diff($existingSizes, $sizes);
+            foreach ($removedSizes as $size) {
+                $product->variants()->where('attributes->size', $size)->delete();
+            }
+        }
 
         return redirect()->route('business.products')->with('success', 'Product updated successfully.');
     }
@@ -286,11 +460,53 @@ class BusinessController extends Controller
         return redirect()->route('business.products.archived')->with('success', 'Product deleted successfully.');
     }
 
-    public function orders()
+    public function orders(Request $request)
     {
-        $retailOrders = collect();
-        $b2bOrders = collect();
-        return view('business.orders', compact('retailOrders', 'b2bOrders'));
+        $businessId = auth()->id();
+        $search = $request->input('search');
+
+        $retailQuery = Order::where('business_id', $businessId)
+            ->where('type', 'retail')
+            ->with('buyer', 'items.product')
+            ->orderByDesc('created_at');
+
+        $b2bQuery = Order::where('business_id', $businessId)
+            ->where('type', 'b2b')
+            ->with('buyer', 'items.product')
+            ->orderByDesc('created_at');
+
+        if (!empty($search)) {
+            $parsedId = preg_replace('/[^0-9]/', '', $search);
+
+            $filter = function ($q) use ($search, $parsedId) {
+                if (!empty($parsedId)) {
+                    $q->where('id', $parsedId);
+                } else {
+                    $q->where('id', 'like', "%{$search}%");
+                }
+
+                $q->orWhere('status', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%")
+                  ->orWhereHas('buyer', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  ->orWhere('shipping_address->name', 'like', "%{$search}%")
+                  ->orWhere('shipping_address->city', 'like', "%{$search}%")
+                  ->orWhere('shipping_address->state', 'like', "%{$search}%")
+                  ->orWhereHas('items.product', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            };
+
+            $retailQuery->where($filter);
+            $b2bQuery->where($filter);
+        }
+
+        $retailOrders = $retailQuery->get();
+        $b2bOrders = $b2bQuery->get();
+
+        return view('business.orders', compact('retailOrders', 'b2bOrders', 'search'));
     }
 
     public function updateOrderStatus(Request $request, Order $order)
@@ -300,10 +516,29 @@ class BusinessController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+            'status' => 'required|in:pending,processing,shipped,cancelled',
         ]);
 
-        $order->update(['status' => $validated['status']]);
+        $newStatus = $validated['status'];
+        $currentStatus = $order->status;
+
+        $allowedTransitions = [
+            'pending' => ['processing', 'cancelled'],
+            'processing' => ['shipped', 'cancelled'],
+            'shipped' => [],
+            'delivered' => [],
+            'cancelled' => [],
+        ];
+
+        if (!in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
+            return redirect()->route('business.orders')->with('error', 'Invalid status transition.');
+        }
+
+        $order->update(['status' => $newStatus]);
+
+        if ($order->buyer) {
+            NotificationService::notifyOrderUpdate($order->buyer, $order->id, $newStatus);
+        }
 
         return redirect()->route('business.orders')->with('success', 'Order status updated successfully.');
     }
@@ -581,5 +816,80 @@ class BusinessController extends Controller
         ]);
 
         return back()->with('success', 'Variant created.');
+    }
+
+    public function profile()
+    {
+        $business = auth()->user()->businessProfile;
+        return view('business.profile', compact('business'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $business = auth()->user()->businessProfile;
+
+        $validated = $request->validate([
+            'business_name' => 'required|string|max:255',
+            'business_address' => 'nullable|string|max:255',
+            'business_phone' => 'nullable|string|max:20',
+            'logo' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,webp',
+        ]);
+
+        $updateData = [
+            'business_name' => $validated['business_name'],
+            'business_address' => $validated['business_address'] ?? null,
+            'business_phone' => $validated['business_phone'] ?? null,
+        ];
+
+        if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+            if ($business && $business->logo && Storage::disk('public')->exists($business->logo)) {
+                Storage::disk('public')->delete($business->logo);
+            }
+            $logoPath = $request->file('logo')->store('business-logos', 'public');
+            $updateData['logo'] = $logoPath;
+        }
+
+        if ($business) {
+            $business->update($updateData);
+        } else {
+            $updateData['user_id'] = auth()->id();
+            BusinessProfile::create($updateData);
+        }
+
+        return back()->with('success', 'Business profile updated successfully.');
+    }
+
+    public function settings()
+    {
+        $user = auth()->user();
+        return view('business.settings', compact('user'));
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = auth()->user();
+
+        $currentPasswordValid = $user->password === $validated['current_password'];
+        if (!$currentPasswordValid) {
+            try {
+                $currentPasswordValid = Hash::check($validated['current_password'], $user->password);
+            } catch (\RuntimeException $e) {
+                $currentPasswordValid = false;
+            }
+        }
+
+        if (!$currentPasswordValid) {
+            return back()->with('error', 'Current password is incorrect.');
+        }
+
+        $user->password = $validated['password'];
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully.');
     }
 }

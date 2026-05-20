@@ -3,10 +3,9 @@
 @section('nav-analytics', 'bg-[#f5f3ef] text-gray-900')
 @section('content')
 <div class="mb-8"><h1 class="font-serif-display text-[36px] text-gray-900 mb-2">Analytics Dashboard</h1><p class="text-[14px] text-gray-600">Platform-wide metrics and performance.</p></div>
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
     <div class="bg-white border border-[#e8e5e0] px-6 py-5"><p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Top Business</p><p class="text-[16px] font-medium text-gray-900">{{ $topBusiness ? $topBusiness->name : '—' }}</p></div>
     <div class="bg-white border border-[#e8e5e0] px-6 py-5"><p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Top Product</p><p class="text-[16px] font-medium text-gray-900">{{ $topProduct ? $topProduct->name : '—' }}</p></div>
-    <div class="bg-white border border-[#e8e5e0] px-6 py-5"><p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Most Active Buyer</p><p class="text-[16px] font-medium text-gray-900">{{ $mostActiveBuyer ? $mostActiveBuyer->name : '—' }}</p></div>
     <div class="bg-white border border-[#e8e5e0] px-6 py-5"><p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Conversion Rate</p><p class="text-[16px] font-medium text-gray-900">{{ $conversionRate }}%</p></div>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">

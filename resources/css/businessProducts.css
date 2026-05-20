@@ -1,0 +1,114 @@
+/* Uniform card sizes for all layouts */
+#productsGrid > div {
+    min-height: 480px !important;
+    max-height: 480px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#productsGrid .aspect-square {
+    aspect-ratio: 1/1 !important;
+    min-height: 160px !important;
+    max-height: 160px !important;
+    flex-shrink: 0 !important;
+}
+
+#productsGrid .p-4 {
+    padding: 1rem !important;
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#productsGrid h3 {
+    font-size: 15px !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0.5rem !important;
+    flex-shrink: 0 !important;
+}
+
+#productsGrid .flex.items-center.gap-2 {
+    margin-bottom: 0.75rem !important;
+    flex-shrink: 0 !important;
+}
+
+#productsGrid .flex.items-center.gap-3 {
+    margin-bottom: 0.75rem !important;
+    flex-shrink: 0 !important;
+}
+
+#productsGrid .mb-3 {
+    margin-bottom: 0.75rem !important;
+    flex-shrink: 0 !important;
+}
+
+#productsGrid .mb-4 {
+    margin-bottom: 1rem !important;
+    flex-grow: 1 !important;
+}
+
+#productsGrid .flex.gap-2 {
+    margin-top: auto !important;
+    flex-shrink: 0 !important;
+}
+
+/* Consistent grid layout for all states - uniform across all categories */
+#productsGrid {
+    gap: 1rem !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+#productsGrid > div {
+    min-height: 480px !important;
+    max-height: 480px !important;
+    min-width: 220px !important;
+    max-width: 300px !important;
+    transform: none !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure buttons are always visible in clothing layout */
+#productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 .flex.gap-2 {
+    margin-top: auto !important;
+    flex-shrink: 0 !important;
+    padding-top: 0.5rem !important;
+    display: flex !important;
+    visibility: visible !important;
+}
+
+#productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 button {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    min-width: 60px !important;
+    white-space: nowrap !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Make sure all button containers are visible */
+#productsGrid .flex.gap-2 {
+    display: flex !important;
+    visibility: visible !important;
+}
+
+#productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 .mb-4 {
+    margin-bottom: 0.5rem !important;
+    flex-grow: 0 !important;
+}
+
+/* Adjust grid for wider cards on larger screens */
+@media (min-width: 1280px) {
+    #productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 {
+        grid-template-columns: repeat(6, minmax(280px, 1fr)) !important;
+    }
+}
+
+@media (min-width: 1536px) {
+    #productsGrid.grid-cols-2.md\:grid-cols-4.lg\:grid-cols-6.xl\:grid-cols-8 {
+        grid-template-columns: repeat(7, minmax(280px, 1fr)) !important;
+    }
+}

@@ -19,7 +19,11 @@ return new class extends Migration
         });
 
         Schema::table('products', function (Blueprint $table) {
-            $table->foreign('product_group_id')->references('id')->on('product_groups')->onDelete('set null');
+            if (!Schema::hasColumn('products', 'product_group_id')) {
+                $table->foreignId('product_group_id')->nullable()->after('category_id')->constrained('product_groups')->onDelete('set null');
+            } else {
+                $table->foreign('product_group_id')->references('id')->on('product_groups')->onDelete('set null');
+            }
         });
     }
 
