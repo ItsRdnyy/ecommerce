@@ -10,10 +10,17 @@
     $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
     $showSizes = $isApparel || $isShoe;
     $totalStock = $showSizes ? $product->variants->sum('stock') : $product->stock;
-
     $isPants = str_contains($categoryName, 'pants') || str_contains($categoryName, 'bottom') || str_contains($categoryName, 'trouser') || str_contains($categoryName, 'jeans');
-    $sizeChartImage = $isPants ? 'assets/images/PantsSizeChart.png' : 'assets/images/SizeChart.png';
-    $sizeChartTitle = $isPants ? 'PureFit Pants Size Chart' : 'PureFit Apparel Size Chart';
+    if ($isShoe) {
+        $sizeChartImage = 'assets/images/shoeSizechart.png';
+        $sizeChartTitle = 'PureFit Shoe Size Chart';
+    } elseif ($isPants) {
+        $sizeChartImage = 'assets/images/PantsSizeChart.png';
+        $sizeChartTitle = 'PureFit Pants Size Chart';
+    } else {
+        $sizeChartImage = 'assets/images/SizeChart.png';
+        $sizeChartTitle = 'PureFit Apparel Size Chart';
+    }
 @endphp
 
     <!-- Product Detail Page -->
@@ -279,29 +286,29 @@
     <div id="size-chart-modal"
          class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4 transition-opacity duration-300">
         <!-- Modal Container -->
-        <div class="relative w-full max-w-5xl scale-95 opacity-0 transition-all duration-300"
+        <div class="relative w-full max-w-3xl scale-95 opacity-0 transition-all duration-300"
              id="size-chart-content">
-            <!-- Close Button -->
-            <button onclick="closeSizeChartModal()"
-                    class="absolute -top-4 -right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg hover:bg-gray-100 transition">
-                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
             <!-- Modal Card -->
-            <div class="overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-100">
+            <div class="overflow-hidden rounded-2xl md:rounded-3xl bg-white shadow-2xl border border-gray-100 relative">
+                <!-- Close Button -->
+                <button onclick="closeSizeChartModal()"
+                        class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-100 transition border border-gray-200">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
                 <!-- Header -->
-                <div class="flex items-center justify-between border-b border-gray-100 px-6 py-5 bg-gradient-to-r from-gray-50 to-white">
+                <div class="flex items-center justify-between border-b border-gray-100 pl-6 pr-16 py-5 bg-gradient-to-r from-gray-50 to-white">
                     <div>
-                        <h2 class="text-2xl font-semibold text-gray-900">{{ $sizeChartTitle }}</h2>
-                        <p class="text-sm text-gray-500 mt-1">Find your perfect fit before ordering</p>
+                        <h2 class="text-xl md:text-2xl font-semibold text-gray-900 pr-4">{{ $sizeChartTitle }}</h2>
+                        <p class="text-xs md:text-sm text-gray-500 mt-1">Find your perfect fit before ordering</p>
                     </div>
                 </div>
                 <!-- Image -->
-                <div class="bg-gray-50 p-4 md:p-6 flex items-center justify-center">
+                <div class="bg-gray-50 p-4 md:p-6 flex items-center justify-center overflow-x-auto">
                     <img src="{{ asset($sizeChartImage) }}"
                          alt="Size Chart"
-                         class="w-full max-h-[80vh] object-contain rounded-2xl border border-gray-200 shadow-sm hover:scale-[1.01] transition-transform duration-300">
+                         class="w-full min-w-[300px] md:min-w-0 max-h-[50vh] md:max-h-[70vh] object-contain rounded-xl md:rounded-2xl border border-gray-200 shadow-sm hover:scale-[1.01] transition-transform duration-300">
                 </div>
             </div>
         </div>

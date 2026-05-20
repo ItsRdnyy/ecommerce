@@ -15,6 +15,7 @@
          data-login-url="{{ route('login', ['redirect' => request()->fullUrl()]) }}"
          data-products-url="{{ route('products') }}"
          data-cart-add-url="{{ route('cart.add') }}"
+         data-buy-now-url="{{ route('cart.buyNow') }}"
          data-checkout-url="{{ route('checkout.index') }}">
 
     <!-- Hero Section -->

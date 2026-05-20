@@ -14,6 +14,8 @@ class CartController extends Controller
 {
     public function index()
     {
+        session()->forget('buy_now');
+
         $cart = $this->getOrCreateCart();
         $cart->load('items.product.category', 'items.product.variants');
         $cart->recalculate();
@@ -109,6 +111,57 @@ class CartController extends Controller
         return $this->jsonOrRedirect($request, 'Added to cart successfully', true, 200, [
             'cart_count' => $cart->items->sum('quantity'),
             'cart_total' => number_format($cart->total, 2),
+        ]);
+    }
+
+    public function buyNow(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1|max:99',
+            'size' => 'nullable|string|max:10',
+        ]);
+
+        $product = Product::with(['category', 'variants'])->findOrFail($request->product_id);
+        $quantity = (int) $request->quantity;
+        $size = $request->size;
+
+        // Determine if size is required based on category
+        $categoryName = strtolower($product->category->name ?? '');
+        $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+        $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
+
+        if (($isApparel || $isShoe) && empty($size)) {
+            return $this->jsonOrRedirect($request, 'Please select a size.', false, 422);
+        }
+
+        // Check stock based on size selection
+        if ($size) {
+            $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+
+            if (!$variant) {
+                return $this->jsonOrRedirect($request, 'Selected size not available.', false, 422);
+            }
+
+            if ($variant->stock < $quantity) {
+                return $this->jsonOrRedirect($request, 'Oops! Only ' . $variant->stock . ' left in this size.', false, 400);
+            }
+        } else {
+            if ($product->stock < $quantity) {
+                return $this->jsonOrRedirect($request, 'Oops! Only ' . $product->stock . ' left in stock.', false, 400);
+            }
+        }
+
+        // Store the Buy Now details in the session
+        session(['buy_now' => [
+            'product_id' => $product->id,
+            'quantity' => $quantity,
+            'size' => $size,
+        ]]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Buy Now initiated successfully.'
         ]);
     }
 
