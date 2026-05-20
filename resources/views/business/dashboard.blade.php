@@ -17,29 +17,41 @@
         </p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-        <div class="bg-white border border-[#e8e5e0] p-6">
-            <h2 class="text-[14px] font-semibold text-gray-900 mb-4">Overview</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="rounded border border-[#e8e5e0] p-4">
-                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-2">Total Products</p>
-                    <p class="text-[28px] font-light text-gray-900">{{ $totalProducts }}</p>
-                </div>
-                <div class="rounded border border-[#e8e5e0] p-4">
-                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-2">Active Products</p>
-                    <p class="text-[28px] font-light text-gray-900">{{ $activeProducts }}</p>
-                </div>
-                <div class="rounded border border-[#e8e5e0] p-4">
-                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-2">Pending Orders</p>
-                    <p class="text-[28px] font-light text-gray-900">{{ $incomingRetail + $bulkRequests }}</p>
-                </div>
-                <div class="rounded border border-[#e8e5e0] p-4">
-                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-2">Earnings</p>
-                    <p class="text-[28px] font-light text-gray-900">₱{{ number_format($totalEarnings, 2) }}</p>
-                </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        <div class="lg:col-span-2 bg-white border border-[#e8e5e0] p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-[14px] font-semibold text-gray-900">Sales Overview (Last 30 Days)</h2>
+                <span class="text-[12px] text-gray-500">Revenue in ₱</span>
+            </div>
+            <div class="h-[300px] relative">
+                <canvas id="salesChart"></canvas>
             </div>
         </div>
 
+        <div class="bg-white border border-[#e8e5e0] p-6">
+            <h2 class="text-[14px] font-semibold text-gray-900 mb-4">Quick Stats</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <div class="rounded border border-[#e8e5e0] p-4">
+                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Total Products</p>
+                    <p class="text-[24px] font-light text-gray-900">{{ $totalProducts }}</p>
+                </div>
+                <div class="rounded border border-[#e8e5e0] p-4">
+                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Active Products</p>
+                    <p class="text-[24px] font-light text-gray-900">{{ $activeProducts }}</p>
+                </div>
+                <div class="rounded border border-[#e8e5e0] p-4">
+                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Pending Orders</p>
+                    <p class="text-[24px] font-light text-gray-900">{{ $incomingRetail + $bulkRequests }}</p>
+                </div>
+                <div class="rounded border border-[#e8e5e0] p-4">
+                    <p class="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-1">Total Earnings</p>
+                    <p class="text-[24px] font-light text-gray-900">₱{{ number_format($totalEarnings, 2) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
         <div class="bg-white border border-[#e8e5e0] p-6">
             <h2 class="text-[14px] font-semibold text-gray-900 mb-4">Recent Activity</h2>
             <div class="space-y-4">
@@ -56,17 +68,16 @@
                 @endforelse
             </div>
         </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-        <a href="{{ route('business.profile') }}" class="block rounded-xl border border-[#e8e5e0] bg-white p-6 hover:bg-[#f5f3ef] transition-colors">
-            <h3 class="text-[15px] font-semibold text-gray-900 mb-2">Business Profile</h3>
-            <p class="text-[14px] text-gray-600">Manage name, contact, address, and logo.</p>
-        </a>
-        <a href="{{ route('business.products') }}" class="block rounded-xl border border-[#e8e5e0] bg-white p-6 hover:bg-[#f5f3ef] transition-colors">
-            <h3 class="text-[15px] font-semibold text-gray-900 mb-2">Product Management</h3>
-            <p class="text-[14px] text-gray-600">Add, edit, and delete products with images and pricing.</p>
-        </a>
+        <div class="space-y-6">
+            <a href="{{ route('business.profile') }}" class="block rounded-xl border border-[#e8e5e0] bg-white p-6 hover:bg-[#f5f3ef] transition-colors">
+                <h3 class="text-[15px] font-semibold text-gray-900 mb-2">Business Profile</h3>
+                <p class="text-[14px] text-gray-600">Manage name, contact, address, and logo.</p>
+            </a>
+            <a href="{{ route('business.products') }}" class="block rounded-xl border border-[#e8e5e0] bg-white p-6 hover:bg-[#f5f3ef] transition-colors">
+                <h3 class="text-[15px] font-semibold text-gray-900 mb-2">Product Management</h3>
+                <p class="text-[14px] text-gray-600">Add, edit, and delete products with images and pricing.</p>
+            </a>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -81,3 +92,83 @@
     </div>
 
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const labels = {!! json_encode($monthlyRevenue->pluck('date')) !!};
+        const data = {!! json_encode($monthlyRevenue->pluck('revenue')) !!};
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Revenue',
+                    data: data,
+                    borderColor: '#111',
+                    backgroundColor: 'rgba(17, 17, 17, 0.05)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#111',
+                    pointRadius: 3,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#111',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return '₱' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e8e5e0',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#666',
+                            callback: function(value) {
+                                return '₱' + value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#666',
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+@endpush

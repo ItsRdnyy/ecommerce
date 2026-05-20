@@ -92,6 +92,13 @@ class BusinessController extends Controller
             ->take(3)
             ->get();
 
+        $monthlyRevenue = Order::where('business_id', $businessId)
+            ->where('created_at', '>=', now()->subDays(30))
+            ->selectRaw('DATE(created_at) as date, SUM(total) as revenue')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
         return view('business.dashboard', compact(
             'business',
             'totalProducts',
@@ -112,7 +119,8 @@ class BusinessController extends Controller
             'soloBuyerCustomers',
             'businessCustomers',
             'wholesaleListings',
-            'recentOrders'
+            'recentOrders',
+            'monthlyRevenue'
         ));
     }
 
