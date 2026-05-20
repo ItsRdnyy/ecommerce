@@ -21,6 +21,11 @@
         $sizeChartImage = 'assets/images/SizeChart.png';
         $sizeChartTitle = 'PureFit Apparel Size Chart';
     }
+    
+    // Dynamic review computations
+    $approvedReviews = $product->reviews;
+    $reviewsCount = $approvedReviews->count();
+    $avgRating = $reviewsCount > 0 ? round($approvedReviews->avg('rating'), 1) : 0;
 @endphp
 
     <!-- Product Detail Page -->
@@ -75,24 +80,33 @@
 
                         <!-- Rating -->
                         <div class="flex items-center gap-2 mb-6">
-                            <div class="flex">
-                                <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                                </svg>
-                                <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                                </svg>
-                                <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                                </svg>
-                                <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                                </svg>
-                                <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                                </svg>
-                            </div>
-                            <span class="text-[14px] text-gray-600">4.8 (12 reviews)</span>
+                            @if($reviewsCount > 0)
+                                <div class="flex">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= round($avgRating))
+                                            <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                            </svg>
+                                        @else
+                                            <svg class="w-5 h-5 text-gray-200 fill-current" viewBox="0 0 20 20">
+                                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                            </svg>
+                                        @endif
+                                    @endfor
+                                </div>
+                                <span class="text-[14px] text-gray-600 font-medium">
+                                    {{ number_format($avgRating, 1) }} ({{ $reviewsCount }} {{ Str::plural('review', $reviewsCount) }})
+                                </span>
+                            @else
+                                <div class="flex">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <svg class="w-5 h-5 text-gray-200 fill-current" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                    @endfor
+                                </div>
+                                <span class="text-[13px] text-gray-500 italic">No reviews yet</span>
+                            @endif
                         </div>
 
                         <!-- Price -->
@@ -278,6 +292,91 @@
                         @endguest
                     </div>
                 </div>
+            </div>
+
+            <!-- Customer Feedback Section -->
+            <div class="bg-white border border-[#e8e5e0] mt-8 p-8 lg:p-12">
+                <h2 class="font-serif-display text-[26px] text-gray-900 mb-8 pb-4 border-b border-[#e8e5e0]">Customer Feedback</h2>
+                
+                @if($reviewsCount > 0)
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                        <!-- Overall Score Summary -->
+                        <div class="flex flex-col items-center justify-center p-6 bg-[#faf9f7] border border-[#e8e5e0] rounded text-center">
+                            <span class="text-[54px] font-light text-gray-900 leading-none mb-2">{{ number_format($avgRating, 1) }}</span>
+                            <div class="flex text-yellow-500 mb-2">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= round($avgRating))
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                    @else
+                                        <svg class="w-5 h-5 text-gray-200 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                    @endif
+                                @endfor
+                            </div>
+                            <span class="text-[12px] text-gray-500 font-medium">Based on {{ $reviewsCount }} {{ Str::plural('review', $reviewsCount) }}</span>
+                        </div>
+                        
+                        <!-- Rating Breakdown Bars -->
+                        <div class="md:col-span-2 flex flex-col justify-center space-y-3">
+                            @for($rating = 5; $rating >= 1; $rating--)
+                                @php
+                                    $count = $approvedReviews->where('rating', $rating)->count();
+                                    $percentage = $reviewsCount > 0 ? ($count / $reviewsCount) * 100 : 0;
+                                @endphp
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[12px] font-medium text-gray-600 w-12 flex items-center justify-end gap-1">
+                                        {{ $rating }} <svg class="w-3.5 h-3.5 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                    </span>
+                                    <div class="flex-1 h-2.5 bg-gray-100 rounded overflow-hidden">
+                                        <div class="h-full bg-yellow-400" style="width: {{ $percentage }}%"></div>
+                                    </div>
+                                    <span class="text-[12px] text-gray-500 w-10 font-medium">{{ $count }} ({{ round($percentage) }}%)</span>
+                                </div>
+                            @endfor
+                        </div>
+                    </div>
+                    
+                    <!-- Feedbacks List -->
+                    <div class="space-y-6">
+                        @foreach($approvedReviews as $rev)
+                            <div class="p-6 border border-[#e8e5e0] hover:border-black/20 transition-all duration-300">
+                                <div class="flex items-start justify-between gap-4 mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <!-- Monogram Avatar -->
+                                        <div class="w-10 h-10 rounded-full bg-[#faf9f7] border border-[#e8e5e0] flex items-center justify-center font-serif-display text-[14px] text-gray-700">
+                                            {{ strtoupper(substr($rev->user->name ?? 'A', 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <h4 class="text-[13px] font-semibold text-gray-900">{{ $rev->user->name ?? 'Anonymous Buyer' }}</h4>
+                                            <div class="flex text-yellow-500 mt-0.5">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    @if($i <= $rev->rating)
+                                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                                    @else
+                                                        <svg class="w-3.5 h-3.5 text-gray-200 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                                    @endif
+                                                @endfor
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[11px] text-gray-400 font-medium">{{ $rev->created_at->format('M d, Y') }}</span>
+                                </div>
+                                @if($rev->comment)
+                                    <p class="text-[14px] text-gray-700 leading-relaxed italic">"{{ $rev->comment }}"</p>
+                                @else
+                                    <p class="text-[13px] text-gray-400 italic">No written comment left.</p>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-16 bg-[#faf9f7] border border-[#e8e5e0] rounded">
+                        <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        <h3 class="font-serif-display text-[18px] text-gray-900 mb-1">No feedback yet</h3>
+                        <p class="text-[13px] text-gray-500 max-w-sm mx-auto">Purchase this product and be the first to share your thoughts with the community!</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

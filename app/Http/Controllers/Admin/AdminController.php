@@ -121,7 +121,7 @@ class AdminController extends Controller
         $allowedTransitions = [
             'pending' => ['processing', 'cancelled'],
             'processing' => ['shipped', 'cancelled'],
-            'shipped' => ['delivered'],
+            'shipped' => [],
             'delivered' => [],
             'cancelled' => [],
         ];

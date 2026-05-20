@@ -79,7 +79,9 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        $product->load('category');
+        $product->load(['category', 'reviews' => function($query) {
+            $query->where('status', 'approved')->with('user')->orderByDesc('created_at');
+        }]);
         return view('product-detail', compact('product'));
     }
 

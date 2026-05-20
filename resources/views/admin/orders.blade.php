@@ -30,13 +30,13 @@
         <td class="px-6 py-4 text-[13px] text-gray-500">{{ $o->created_at->format('M d, Y') }}</td>
         <td class="px-6 py-4">
             <div class="flex items-center gap-3">
-                @if($o->status === 'cancelled')
-                    <span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border border-red-200 bg-red-50 text-red-700">
-                        Cancelled
+                @if(in_array($o->status, ['cancelled', 'shipped', 'delivered', 'completed', 'refunded']))
+                    <span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border {{ $o->status === 'delivered' || $o->status === 'completed' ? 'border-green-200 bg-green-50 text-green-700' : ($o->status === 'cancelled' || $o->status === 'refunded' ? 'border-red-200 bg-red-50 text-red-700' : 'border-purple-200 bg-purple-50 text-purple-700') }}">
+                        {{ ucfirst($o->status) }}
                     </span>
                 @else
                     @php
-                        $states = ['pending', 'processing', 'shipped', 'delivered'];
+                        $states = ['pending', 'processing', 'shipped'];
                         $currentIndex = array_search($o->status, $states);
                     @endphp
                     <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline m-0 p-0">
@@ -49,7 +49,6 @@
                                         'pending' => 'Pending',
                                         'processing' => 'Process',
                                         'shipped' => 'Ship',
-                                        'delivered' => 'Deliver',
                                     };
                                     
                                     $optionDisabled = ($index != $currentIndex && $index != $currentIndex + 1);
@@ -183,13 +182,13 @@
         <td class="px-6 py-4 text-[13px] text-gray-500">{{ $o->created_at->format('M d, Y') }}</td>
         <td class="px-6 py-4">
             <div class="flex items-center gap-3">
-                @if($o->status === 'cancelled')
-                    <span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border border-red-200 bg-red-50 text-red-700">
-                        Cancelled
+                @if(in_array($o->status, ['cancelled', 'shipped', 'delivered', 'completed', 'refunded']))
+                    <span class="inline-flex px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border {{ $o->status === 'delivered' || $o->status === 'completed' ? 'border-green-200 bg-green-50 text-green-700' : ($o->status === 'cancelled' || $o->status === 'refunded' ? 'border-red-200 bg-red-50 text-red-700' : 'border-purple-200 bg-purple-50 text-purple-700') }}">
+                        {{ ucfirst($o->status) }}
                     </span>
                 @else
                     @php
-                        $states = ['pending', 'processing', 'shipped', 'delivered'];
+                        $states = ['pending', 'processing', 'shipped'];
                         $currentIndex = array_search($o->status, $states);
                     @endphp
                     <form method="POST" action="{{ route('admin.orders.status', $o) }}" class="inline m-0 p-0">
@@ -202,7 +201,6 @@
                                         'pending' => 'Pending',
                                         'processing' => 'Process',
                                         'shipped' => 'Ship',
-                                        'delivered' => 'Deliver',
                                     };
                                     
                                     $optionDisabled = ($index != $currentIndex && $index != $currentIndex + 1);

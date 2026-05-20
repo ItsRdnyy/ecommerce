@@ -105,7 +105,7 @@ class Order extends Model
             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_REFUNDED],
             self::STATUS_PROCESSING => [self::STATUS_PACKED, self::STATUS_REFUNDED],
             self::STATUS_PACKED => [self::STATUS_SHIPPED, self::STATUS_REFUNDED],
-            self::STATUS_SHIPPED => [self::STATUS_IN_TRANSIT, self::STATUS_REFUNDED],
+            self::STATUS_SHIPPED => [self::STATUS_IN_TRANSIT, self::STATUS_DELIVERED, self::STATUS_REFUNDED],
             self::STATUS_IN_TRANSIT => [self::STATUS_DELIVERED, self::STATUS_REFUNDED],
             self::STATUS_DELIVERED => [self::STATUS_COMPLETED, self::STATUS_REFUNDED],
             self::STATUS_COMPLETED => [self::STATUS_REFUNDED],

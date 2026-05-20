@@ -11,7 +11,7 @@ class LandingPageController extends Controller
     {
         // Get newly added products (latest 4 products with status 'active')
         $featuredProducts = Product::where('status', 'active')
-            ->with('category')
+            ->with(['category', 'reviews'])
             ->latest()
             ->take(4)
             ->get();

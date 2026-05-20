@@ -200,12 +200,24 @@
                                         <span class="text-[11px] font-semibold text-green-700 uppercase tracking-wider">Bulk Savings Active</span>
                                     @endif
                                 </div>
-                                <div class="flex items-center">
-                                    <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                                    </svg>
-                                    <span class="ml-1 text-[12px] text-gray-600">4.8</span>
-                                </div>
+                                @php
+                                    $approvedReviews = $product->reviews->where('status', 'approved');
+                                    $reviewsCount = $approvedReviews->count();
+                                    $averageRating = $reviewsCount > 0 ? round($approvedReviews->avg('rating'), 1) : null;
+                                @endphp
+                                @if($reviewsCount > 0)
+                                    <div class="flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                        <span class="text-[12px] font-semibold text-gray-900">{{ number_format($averageRating, 1) }}</span>
+                                        <span class="text-[11px] text-gray-500">({{ $reviewsCount }})</span>
+                                    </div>
+                                @else
+                                    <div class="flex items-center text-gray-400">
+                                        <span class="text-[11px] italic">No reviews</span>
+                                    </div>
+                                @endif
                             </div>
                             <div class="flex gap-3">
                                 <button onclick="LandingPage.addToCart({{ $product->id }})"

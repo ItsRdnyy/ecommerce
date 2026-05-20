@@ -101,7 +101,7 @@ class BusinessController extends Controller
         $businessId = auth()->id();
         $query = Product::where('business_id', $businessId)
             ->whereIn('status', ['active', 'flagged'])
-            ->with(['category', 'variants']);
+            ->with(['category', 'variants', 'reviews']);
             
         // Filter by category if selected
         if ($request->filled('category')) {
@@ -118,7 +118,7 @@ class BusinessController extends Controller
         $businessId = auth()->id();
         $query = Product::where('business_id', $businessId)
             ->whereIn('status', ['active', 'flagged'])
-            ->with(['category', 'variants']);
+            ->with(['category', 'variants', 'reviews']);
 
         // Filter by category if selected
         if ($request->filled('category')) {
@@ -454,7 +454,7 @@ class BusinessController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+            'status' => 'required|in:pending,processing,shipped,cancelled',
         ]);
 
         $newStatus = $validated['status'];
@@ -463,7 +463,7 @@ class BusinessController extends Controller
         $allowedTransitions = [
             'pending' => ['processing', 'cancelled'],
             'processing' => ['shipped', 'cancelled'],
-            'shipped' => ['delivered'],
+            'shipped' => [],
             'delivered' => [],
             'cancelled' => [],
         ];
