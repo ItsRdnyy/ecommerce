@@ -1,4 +1,4 @@
-﻿@extends('business.layout')
+@extends('business.layout')
 
 @section('title', 'Business Dashboard')
 @section('nav-overview', 'bg-[#f5f3ef] text-gray-900')
@@ -98,24 +98,20 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('salesChart').getContext('2d');
-        const labels = {!! json_encode($monthlyRevenue->pluck('date')) !!};
-        const data = {!! json_encode($monthlyRevenue->pluck('revenue')) !!};
+        const labels = {!! json_encode($dailyRevenue->pluck('date')) !!};
+        const data = {!! json_encode($dailyRevenue->pluck('revenue')) !!};
 
         new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Revenue',
+                    label: 'Daily Revenue',
                     data: data,
-                    borderColor: '#111',
                     backgroundColor: 'rgba(17, 17, 17, 0.05)',
+                    borderColor: '#111',
                     borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#111',
-                    pointRadius: 3,
-                    pointHoverRadius: 6
+                    yAxisID: 'y',
                 }]
             },
             options: {
@@ -123,7 +119,8 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'bottom',
                     },
                     tooltip: {
                         mode: 'index',
@@ -143,29 +140,11 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: {
-                            color: '#e8e5e0',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            font: { size: 11 },
-                            color: '#666',
-                            callback: function(value) {
-                                return '₱' + value.toLocaleString();
-                            }
-                        }
+                        position: 'left',
+                        grid: { color: '#e8e5e0', drawBorder: false },
+                        ticks: { font: { size: 11 }, color: '#666', callback: function(value) { return '₱' + value.toLocaleString(); } }
                     },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: { size: 11 },
-                            color: '#666',
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
+                    x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#666', maxRotation: 45, minRotation: 45 } }
                 }
             }
         });

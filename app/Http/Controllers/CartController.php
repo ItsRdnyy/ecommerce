@@ -283,6 +283,10 @@ class CartController extends Controller
 
     private function resolveCartItemType(Product $product, int $quantity): string
     {
+        if (DiscountEngine::findTier($product, $quantity)) {
+            return 'wholesale';
+        }
+
         if ($product->is_wholesale_enabled && $product->wholesale_price > 0) {
             if (DiscountEngine::validateMoq($product, $quantity, 'wholesale')) {
                 return 'wholesale';

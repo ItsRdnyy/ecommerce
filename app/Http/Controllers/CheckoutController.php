@@ -41,7 +41,7 @@ class CheckoutController extends Controller
                 'shipping_total' => 0
             ]);
             
-            $itemType = $product->is_wholesale_enabled && $product->wholesale_price > 0 && DiscountEngine::validateMoq($product, $quantity, 'wholesale') ? 'wholesale' : 'retail';
+            $itemType = DiscountEngine::findTier($product, $quantity) || ($product->is_wholesale_enabled && $product->wholesale_price > 0 && DiscountEngine::validateMoq($product, $quantity, 'wholesale')) ? 'wholesale' : 'retail';
             $calc = DiscountEngine::calculate($product, $quantity, $itemType, $size);
             $shippingEstimate = ShippingCalculator::calculateForProduct($product, ($product->weight ?? 0.5) * $quantity);
             
@@ -106,7 +106,7 @@ class CheckoutController extends Controller
             $quantity = $buyNowData['quantity'];
             $size = $buyNowData['size'];
             
-            $itemType = $product->is_wholesale_enabled && $product->wholesale_price > 0 && DiscountEngine::validateMoq($product, $quantity, 'wholesale') ? 'wholesale' : 'retail';
+            $itemType = DiscountEngine::findTier($product, $quantity) || ($product->is_wholesale_enabled && $product->wholesale_price > 0 && DiscountEngine::validateMoq($product, $quantity, 'wholesale')) ? 'wholesale' : 'retail';
             $calc = DiscountEngine::calculate($product, $quantity, $itemType, $size);
             $shippingEstimate = ShippingCalculator::calculateForProduct($product, ($product->weight ?? 0.5) * $quantity);
             

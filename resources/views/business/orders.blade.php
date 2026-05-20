@@ -360,7 +360,7 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-6 py-10 text-center text-[14px] text-gray-500">
-                                No B2B orders found.
+                                No Bulk orders found.
                             </td>
                         </tr>
                     @endforelse

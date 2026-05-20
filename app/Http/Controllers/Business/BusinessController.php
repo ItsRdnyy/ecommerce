@@ -92,9 +92,17 @@ class BusinessController extends Controller
             ->take(3)
             ->get();
 
-        $monthlyRevenue = Order::where('business_id', $businessId)
-            ->where('created_at', '>=', now()->subDays(30))
+        $dailyRevenue = Order::where('business_id', $businessId)
+            ->where('status', '!=', Order::STATUS_CANCELLED)
             ->selectRaw('DATE(created_at) as date, SUM(total) as revenue')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // New: Orders count per day for chart
+        $monthlyOrders = Order::where('business_id', $businessId)
+            ->where('status', '!=', Order::STATUS_CANCELLED)
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
@@ -120,7 +128,7 @@ class BusinessController extends Controller
             'businessCustomers',
             'wholesaleListings',
             'recentOrders',
-            'monthlyRevenue'
+            'dailyRevenue', 'monthlyOrders'
         ));
     }
 
@@ -527,6 +535,10 @@ class BusinessController extends Controller
         }
 
         $order->update(['status' => $newStatus]);
+
+        if ($order->buyer) {
+            NotificationService::notifyOrderUpdate($order->buyer, $order->id, $newStatus);
+        }
 
         return redirect()->route('business.orders')->with('success', 'Order status updated successfully.');
     }
