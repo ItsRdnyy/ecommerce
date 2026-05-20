@@ -61,12 +61,12 @@
                 <label class="block text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-700 mb-3">Account Type</label>
                 <div class="space-y-3">
                     <label class="flex items-center p-3 bg-white border border-[#ddd8d0] rounded cursor-pointer hover:border-[#111] transition-colors">
-                        <input type="radio" name="account_type" value="personal" checked
+                        <input type="radio" name="account_type" value="personal" {{ old('account_type', 'personal') === 'personal' ? 'checked' : '' }}
                                class="w-4 h-4 border-gray-300 accent-[#111]">
                         <span class="ml-3 text-[14px] text-gray-900">Personal Use (Buyer)</span>
                     </label>
                     <label class="flex items-center p-3 bg-white border border-[#ddd8d0] rounded cursor-pointer hover:border-[#111] transition-colors">
-                        <input type="radio" name="account_type" value="business"
+                        <input type="radio" name="account_type" value="business" {{ old('account_type') === 'business' ? 'checked' : '' }}
                                class="w-4 h-4 border-gray-300 accent-[#111]">
                         <span class="ml-3 text-[14px] text-gray-900">Business Use (Seller)</span>
                     </label>
@@ -74,6 +74,27 @@
                 @error('account_type')
                     <p class="mt-2 text-[12px] text-red-600">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <div id="business-fields" class="{{ old('account_type') === 'business' ? '' : 'hidden' }} space-y-5">
+                <div>
+                    <label for="business_name" class="block text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-700 mb-2">Business Name</label>
+                    <input type="text" id="business_name" name="business_name" value="{{ old('business_name') }}"
+                           class="w-full bg-white border border-[#ddd8d0] px-4 py-3 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#111] transition-colors"
+                           placeholder="Your company name">
+                    @error('business_name')
+                        <p class="mt-2 text-[12px] text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="tax_id" class="block text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-700 mb-2">Tax ID / Business Registration</label>
+                    <input type="text" id="tax_id" name="tax_id" value="{{ old('tax_id') }}"
+                           class="w-full bg-white border border-[#ddd8d0] px-4 py-3 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#111] transition-colors"
+                           placeholder="Tax ID or Registration Number">
+                    @error('tax_id')
+                        <p class="mt-2 text-[12px] text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
 
             <div>
@@ -116,5 +137,17 @@
         </p>
     </div>
 
+    <script>
+        document.querySelectorAll('input[name="account_type"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const businessFields = document.getElementById('business-fields');
+                if (this.value === 'business') {
+                    businessFields.classList.remove('hidden');
+                } else {
+                    businessFields.classList.add('hidden');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -35,6 +35,7 @@ class User extends Authenticatable
         'role',
         'status',
         'verification_code',
+        'verification_expires_at',
     ];
 
     /**
@@ -56,6 +57,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'verification_expires_at' => 'datetime',
         ];
     }
 

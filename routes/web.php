@@ -34,7 +34,8 @@ Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'handle']);
 
 Route::get('/verify-account', [RegisterController::class, 'showVerifyForm'])->name('verify.show');
-Route::post('/verify-account', [RegisterController::class, 'verifyAccount'])->name('verify.submit');
+Route::post('/verify-account', [RegisterController::class, 'verifyAccount'])->name('verify.submit')->middleware('throttle:6,1');
+Route::post('/resend-verification', [RegisterController::class, 'resendVerification'])->name('verify.resend')->middleware('throttle:3,1');
 
 Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('password.request');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'handle'])->name('password.email');
