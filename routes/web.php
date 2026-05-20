@@ -21,7 +21,10 @@ use App\Http\Controllers\LandingPageController;
 
 
 
+use App\Http\Controllers\ContactController;
+
 Route::get('/', [LandingPageController::class, 'index'])->name('home');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 Route::get('/products', [ProductController::class, 'index'])->name('products');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/products/{product}/calculate-price', [ProductController::class, 'calculatePrice'])->name('products.calculate_price');
@@ -110,6 +113,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/users/{user}/approve', [AdminController::class, 'approveUser'])->name('admin.users.approve');
     Route::post('/users/{user}/reject', [AdminController::class, 'rejectUser'])->name('admin.users.reject');
     Route::get('/analytics', [AdminController::class, 'analytics'])->name('admin.analytics');
+    Route::get('/messages', [AdminController::class, 'messages'])->name('admin.messages');
+    Route::patch('/messages/{message}/status', [AdminController::class, 'updateMessageStatus'])->name('admin.messages.status');
     Route::get('/verifications', [AdminController::class, 'verifications'])->name('admin.verifications');
     Route::patch('/verifications/{profile}', [AdminController::class, 'updateVerification'])->name('admin.verifications.update');
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
@@ -150,6 +155,8 @@ Route::middleware(['auth', 'business'])->prefix('business')->group(function () {
     Route::post('/products/{product}/inventory', [BusinessController::class, 'updateInventory'])->name('business.inventory.update');
     Route::get('/preorders', [BusinessController::class, 'preorders'])->name('business.preorders');
     Route::post('/preorders/{preorder}/fulfill', [BusinessController::class, 'fulfillPreorder'])->name('business.preorders.fulfill');
+    Route::get('/messages', [BusinessController::class, 'messages'])->name('business.messages');
+    Route::patch('/messages/{message}/status', [BusinessController::class, 'updateMessageStatus'])->name('business.messages.status');
     Route::get('/analytics', [AnalyticsController::class, 'businessDashboard'])->name('business.analytics');
     Route::post('/shipments/{order}', [ShippingController::class, 'update'])->name('business.shipments.update');
     Route::post('/shipments/{shipment}/timeline', [ShippingController::class, 'addTimeline'])->name('business.shipments.timeline');

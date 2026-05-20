@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\User;
 
 class LandingPageController extends Controller
 {
@@ -15,7 +16,12 @@ class LandingPageController extends Controller
             ->latest()
             ->take(4)
             ->get();
+
+        $businesses = User::where('role', User::ROLE_BUSINESS)
+            ->where('status', User::STATUS_ACTIVE)
+            ->with('businessProfile')
+            ->get();
             
-        return view('landingpage', compact('featuredProducts'));
+        return view('landingpage', compact('featuredProducts', 'businesses'));
     }
 }
