@@ -33,6 +33,9 @@ Route::post('/login', [LoginController::class, 'handle']);
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'handle']);
 
+Route::get('/verify-account', [RegisterController::class, 'showVerifyForm'])->name('verify.show');
+Route::post('/verify-account', [RegisterController::class, 'verifyAccount'])->name('verify.submit');
+
 Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('password.request');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'handle'])->name('password.email');
 
