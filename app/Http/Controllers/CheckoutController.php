@@ -92,7 +92,7 @@ class CheckoutController extends Controller
             'shipping_address.city' => 'required|string',
             'shipping_address.state' => 'required|string',
             'shipping_address.postal' => 'required|string',
-            'shipping_address.country' => 'required|string',
+            'shipping_address.contact' => 'required|string',
             'billing_address' => 'nullable|array',
             'payment_method' => 'required|in:stripe,paypal,bank_transfer,cod',
             'notes' => 'nullable|string',

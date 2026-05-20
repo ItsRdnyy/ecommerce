@@ -20,7 +20,7 @@
                                 <input type="text" name="shipping_address[name]" required class="w-full bg-transparent border border-[#e8e5e0] text-[13px] py-2 px-3 focus:outline-none focus:border-black">
                             </div>
                             <div class="sm:col-span-2">
-                                <label class="block text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-600 mb-1">Address Line</label>
+                                <label class="block text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-600 mb-1">Address </label>
                                 <input type="text" name="shipping_address[line1]" required class="w-full bg-transparent border border-[#e8e5e0] text-[13px] py-2 px-3 focus:outline-none focus:border-black">
                             </div>
                             <div>
@@ -28,7 +28,7 @@
                                 <input type="text" name="shipping_address[city]" required class="w-full bg-transparent border border-[#e8e5e0] text-[13px] py-2 px-3 focus:outline-none focus:border-black">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-600 mb-1">State / Province</label>
+                                <label class="block text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-600 mb-1">Province</label>
                                 <input type="text" name="shipping_address[state]" required class="w-full bg-transparent border border-[#e8e5e0] text-[13px] py-2 px-3 focus:outline-none focus:border-black">
                             </div>
                             <div>
@@ -36,8 +36,8 @@
                                 <input type="text" name="shipping_address[postal]" required class="w-full bg-transparent border border-[#e8e5e0] text-[13px] py-2 px-3 focus:outline-none focus:border-black">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-600 mb-1">Country</label>
-                                <input type="text" name="shipping_address[country]" required class="w-full bg-transparent border border-[#e8e5e0] text-[13px] py-2 px-3 focus:outline-none focus:border-black">
+                                <label class="block text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-600 mb-1">Contact Number</label>
+                                <input type="text" name="shipping_address[contact]" required class="w-full bg-transparent border border-[#e8e5e0] text-[13px] py-2 px-3 focus:outline-none focus:border-black">
                             </div>
                         </div>
                     </div>

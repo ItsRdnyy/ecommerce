@@ -103,7 +103,7 @@
     <section id="products" class="py-16 lg:py-20 bg-white">
         <div class="max-w-[1400px] mx-auto px-6 lg:px-10">
             <div class="text-center mb-12">
-                <h2 class="text-[28px] sm:text-[32px] font-semibold text-gray-900 mb-4">Featured Products</h2>
+                <h2 class="text-[28px] sm:text-[32px] font-semibold text-gray-900 mb-4">New Arrival Products</h2>
                 <p class="text-[16px] text-gray-600 max-w-2xl mx-auto">Discover our curated collection of premium essentials</p>
             </div>
 

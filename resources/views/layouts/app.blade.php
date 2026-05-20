@@ -70,7 +70,7 @@
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
                             </button>
                             <div class="absolute right-0 top-full mt-2 w-48 bg-white border border-[#e8e5e0] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                                <a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('business.dashboard') }}" class="block px-4 py-3 text-[11px] font-medium tracking-[0.1em] uppercase text-gray-800 hover:bg-[#f5f3ef]">Dashboard</a>
+                                <a href="/" class="block px-4 py-3 text-[11px] font-medium tracking-[0.1em] uppercase text-gray-800 hover:bg-[#f5f3ef]">Dashboard</a>
                                 <a href="{{ route('orders.index') }}" class="block px-4 py-3 text-[11px] font-medium tracking-[0.1em] uppercase text-gray-800 hover:bg-[#f5f3ef]">Orders</a>
                                 <form method="POST" action="{{ route('logout') }}" class="block">
                                     @csrf

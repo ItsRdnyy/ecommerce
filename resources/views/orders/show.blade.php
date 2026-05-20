@@ -90,26 +90,18 @@
                         <p class="text-[13px] font-medium text-gray-900">{{ $order->shipping_address['name'] ?? '—' }}</p>
                         <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
                             {{ $order->shipping_address['line1'] ?? '' }}<br>
-                            {{ $order->shipping_address['city'] ?? '' }}, {{ $order->shipping_address['state'] ?? '' }} {{ $order->shipping_address['postal'] ?? '' }}<br>
-                            {{ $order->shipping_address['country'] ?? '' }}
+                            {{ $order->shipping_address['city'] ?? '' }}, {{ $order->shipping_address['state'] ?? '' }} {{ $order->shipping_address['postal'] ?? '' }}
+                            @if(!empty($order->shipping_address['contact']))
+                                <br>Contact: {{ $order->shipping_address['contact'] }}
+                            @elseif(!empty($order->shipping_address['country']))
+                                <br>{{ $order->shipping_address['country'] }}
+                            @endif
                         </p>
                     @else
                         <p class="text-[12px] text-gray-500">No shipping address provided.</p>
                     @endif
                 </div>
-                <div>
-                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Billing Address</h4>
-                    @if($order->billing_address)
-                        <p class="text-[13px] font-medium text-gray-900">{{ $order->billing_address['name'] ?? '—' }}</p>
-                        <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
-                            {{ $order->billing_address['line1'] ?? '' }}<br>
-                            {{ $order->billing_address['city'] ?? '' }}, {{ $order->billing_address['state'] ?? '' }} {{ $order->billing_address['postal'] ?? '' }}<br>
-                            {{ $order->billing_address['country'] ?? '' }}
-                        </p>
-                    @else
-                        <p class="text-[12px] text-gray-500">No billing address provided.</p>
-                    @endif
-                </div>
+                
             </div>
             @if($order->notes)
             <div class="mt-6 pt-6 border-t border-[#e8e5e0]">
@@ -155,7 +147,7 @@
                 @foreach($order->payments as $payment)
                 <div class="flex justify-between text-[13px]">
                     <span class="text-gray-600">{{ ucfirst($payment->type) }} via {{ ucfirst($payment->method) }}</span>
-                    <span class="font-medium text-gray-900">₱{{ number_format(abs($payment->amount), 2) }}</span>
+                    <span class="font-medium text-gray-900">₱{{ number_format($order->total, 2) }}</span>
                 </div>
                 @endforeach
             </div>
