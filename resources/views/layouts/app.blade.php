@@ -71,7 +71,7 @@
                             </button>
                             <div class="absolute right-0 top-full mt-2 w-48 bg-white border border-[#e8e5e0] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                                 @if(auth()->user()->isAdmin())
-                                    <a href="{{ route('admin.dashboard') }}" class="block px-4 py-3 text-[11px] font-medium tracking-[0.1em] uppercase text-gray-800 hover:bg-[#f5f3ef]">Dashboard</a>
+                                    <a href="/" class="block px-4 py-3 text-[11px] font-medium tracking-[0.1em] uppercase text-gray-800 hover:bg-[#f5f3ef]">Dashboard</a>
                                 @elseif(auth()->user()->isBusiness())
                                     <a href="{{ route('business.dashboard') }}" class="block px-4 py-3 text-[11px] font-medium tracking-[0.1em] uppercase text-gray-800 hover:bg-[#f5f3ef]">Dashboard</a>
                                 @else
@@ -99,6 +99,32 @@
             </div>
         </div>
     </nav>
+
+    <!-- Flash Messages -->
+    @if(session('success'))
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-10 mt-4">
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span class="text-sm font-medium">{{ session('success') }}</span>
+            </div>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-10 mt-4">
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span class="text-sm font-medium">{{ session('error') }}</span>
+            </div>
+        </div>
+    @endif
+    @if(session('info'))
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-10 mt-4">
+            <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span class="text-sm font-medium">{{ session('info') }}</span>
+            </div>
+        </div>
+    @endif
 
     @yield('content')
 
