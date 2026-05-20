@@ -100,12 +100,12 @@ class AdminController extends Controller
     public function orders()
     {
         $retailOrders = Order::where('type', 'retail')
-            ->with('buyer', 'business', 'items.product')
+            ->with('buyer', 'business', 'items.product', 'payments')
             ->orderBy('created_at', 'desc')
             ->get();
 
         $b2bOrders = Order::where('type', 'b2b')
-            ->with('buyer', 'business', 'items.product')
+            ->with('buyer', 'business', 'items.product', 'payments')
             ->orderBy('created_at', 'desc')
             ->get();
 

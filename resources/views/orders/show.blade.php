@@ -81,6 +81,44 @@
             </div>
         </div>
 
+        <div class="bg-white border border-[#e8e5e0] p-6 mb-6">
+            <h3 class="text-[11px] font-semibold tracking-[0.15em] uppercase text-gray-900 mb-4">Checkout Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Shipping Address</h4>
+                    @if($order->shipping_address)
+                        <p class="text-[13px] font-medium text-gray-900">{{ $order->shipping_address['name'] ?? '—' }}</p>
+                        <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
+                            {{ $order->shipping_address['line1'] ?? '' }}<br>
+                            {{ $order->shipping_address['city'] ?? '' }}, {{ $order->shipping_address['state'] ?? '' }} {{ $order->shipping_address['postal'] ?? '' }}<br>
+                            {{ $order->shipping_address['country'] ?? '' }}
+                        </p>
+                    @else
+                        <p class="text-[12px] text-gray-500">No shipping address provided.</p>
+                    @endif
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Billing Address</h4>
+                    @if($order->billing_address)
+                        <p class="text-[13px] font-medium text-gray-900">{{ $order->billing_address['name'] ?? '—' }}</p>
+                        <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
+                            {{ $order->billing_address['line1'] ?? '' }}<br>
+                            {{ $order->billing_address['city'] ?? '' }}, {{ $order->billing_address['state'] ?? '' }} {{ $order->billing_address['postal'] ?? '' }}<br>
+                            {{ $order->billing_address['country'] ?? '' }}
+                        </p>
+                    @else
+                        <p class="text-[12px] text-gray-500">No billing address provided.</p>
+                    @endif
+                </div>
+            </div>
+            @if($order->notes)
+            <div class="mt-6 pt-6 border-t border-[#e8e5e0]">
+                <h4 class="text-[10px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-2">Order Notes</h4>
+                <p class="text-[13px] text-gray-600 italic bg-[#faf9f7] p-3 border border-[#e8e5e0]">"{{ $order->notes }}"</p>
+            </div>
+            @endif
+        </div>
+
         @if(in_array($order->status, [\App\Models\Order::STATUS_PENDING, \App\Models\Order::STATUS_CONFIRMED]))
         <div class="bg-white border border-[#e8e5e0] p-6 mb-6">
             <h3 class="text-[11px] font-semibold tracking-[0.15em] uppercase text-red-600 mb-4">Danger Zone</h3>
