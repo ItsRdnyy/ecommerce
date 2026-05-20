@@ -30,6 +30,9 @@
 
         // Setup mobile menu toggle
         setupMobileMenu();
+
+        // Setup account dropdown toggle
+        setupAccountDropdown();
     }
 
     /**
@@ -42,6 +45,36 @@
         if (mobileMenuButton && mobileMenu) {
             mobileMenuButton.addEventListener('click', function() {
                 mobileMenu.classList.toggle('hidden');
+            });
+        }
+    }
+
+    /**
+     * Setup account dropdown toggle for click/touch interactions (especially on mobile)
+     */
+    function setupAccountDropdown() {
+        const accountButton = document.querySelector('[data-account-toggle]');
+        const accountDropdown = document.querySelector('[data-account-dropdown]');
+
+        if (accountButton && accountDropdown) {
+            accountButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isHidden = accountDropdown.classList.contains('invisible');
+                if (isHidden) {
+                    accountDropdown.classList.remove('opacity-0', 'invisible');
+                    accountDropdown.classList.add('opacity-100', 'visible');
+                } else {
+                    accountDropdown.classList.add('opacity-0', 'invisible');
+                    accountDropdown.classList.remove('opacity-100', 'visible');
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!accountButton.contains(e.target) && !accountDropdown.contains(e.target)) {
+                    accountDropdown.classList.add('opacity-0', 'invisible');
+                    accountDropdown.classList.remove('opacity-100', 'visible');
+                }
             });
         }
     }

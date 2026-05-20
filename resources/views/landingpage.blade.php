@@ -32,7 +32,7 @@
                 </div>
 
                 <!-- Hero Image -->
-                <div class="relative order-1 lg:order-2 h-[400px] lg:h-auto">
+                <div class="relative order-1 lg:order-2 h-[350px] sm:h-[450px] md:h-[550px] lg:h-auto">
                     <img src="{{ asset('assets/images/hero-fashion.jpg') }}" 
                          alt="Fashion models wearing modern casual clothing" 
                          class="absolute inset-0 w-full h-full object-cover">
