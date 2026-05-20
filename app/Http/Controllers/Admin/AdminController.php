@@ -46,23 +46,13 @@ class AdminController extends Controller
         $openDisputes = Dispute::where('status', 'open')->count();
         $pendingVerifications = BusinessProfile::whereNull('verified_at')->count();
 
-        $storeIncomes = User::where('role', User::ROLE_BUSINESS)
-            ->with(['businessProfile'])
-            ->withSum(['ordersAsBusiness as total_income' => function($query) {
-                $query->whereIn('status', [Order::STATUS_DELIVERED, Order::STATUS_COMPLETED]);
-            }], 'total')
-            ->get()
-            ->map(function($user) {
-                return [
-                    'name' => $user->businessProfile->business_name ?? $user->name,
-                    'income' => (float) ($user->total_income ?? 0)
-                ];
-            });
+        $commissionRate = Setting::get('commission_rate', '10');
+        $platformFee = Setting::get('platform_fee', '2.50');
 
         return view('admin.dashboard', compact(
             'users', 'totalUsers', 'totalBusinesses',
             'totalProducts', 'retailOrders', 'b2bOrders', 'totalRevenue',
-            'openDisputes', 'pendingVerifications', 'storeIncomes'
+            'openDisputes', 'pendingVerifications', 'commissionRate', 'platformFee'
         ));
     }
 
