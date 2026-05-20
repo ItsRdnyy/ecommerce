@@ -55,8 +55,12 @@
                         <p class="text-[13px] font-medium text-gray-900">{{ $o->shipping_address['name'] ?? '—' }}</p>
                         <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
                             {{ $o->shipping_address['line1'] ?? '' }}<br>
-                            {{ $o->shipping_address['city'] ?? '' }}, {{ $o->shipping_address['state'] ?? '' }} {{ $o->shipping_address['postal'] ?? '' }}<br>
-                            {{ $o->shipping_address['country'] ?? '' }}
+                            {{ $o->shipping_address['city'] ?? '' }}, {{ $o->shipping_address['state'] ?? '' }} {{ $o->shipping_address['postal'] ?? '' }}
+                            @if(!empty($o->shipping_address['contact']))
+                                <br>Contact: {{ $o->shipping_address['contact'] }}
+                            @elseif(!empty($o->shipping_address['country']))
+                                <br>{{ $o->shipping_address['country'] }}
+                            @endif
                         </p>
                     @else
                         <p class="text-[12px] text-gray-500">No shipping address provided.</p>
@@ -70,8 +74,12 @@
                         <p class="text-[13px] font-medium text-gray-900">{{ $o->billing_address['name'] ?? '—' }}</p>
                         <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
                             {{ $o->billing_address['line1'] ?? '' }}<br>
-                            {{ $o->billing_address['city'] ?? '' }}, {{ $o->billing_address['state'] ?? '' }} {{ $o->billing_address['postal'] ?? '' }}<br>
-                            {{ $o->billing_address['country'] ?? '' }}
+                            {{ $o->billing_address['city'] ?? '' }}, {{ $o->billing_address['state'] ?? '' }} {{ $o->billing_address['postal'] ?? '' }}
+                            @if(!empty($o->billing_address['contact']))
+                                <br>Contact: {{ $o->billing_address['contact'] }}
+                            @elseif(!empty($o->billing_address['country']))
+                                <br>{{ $o->billing_address['country'] }}
+                            @endif
                         </p>
                     @else
                         <p class="text-[12px] text-gray-500">No billing address provided.</p>
@@ -174,8 +182,12 @@
                         <p class="text-[13px] font-medium text-gray-900">{{ $o->shipping_address['name'] ?? '—' }}</p>
                         <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
                             {{ $o->shipping_address['line1'] ?? '' }}<br>
-                            {{ $o->shipping_address['city'] ?? '' }}, {{ $o->shipping_address['state'] ?? '' }} {{ $o->shipping_address['postal'] ?? '' }}<br>
-                            {{ $o->shipping_address['country'] ?? '' }}
+                            {{ $o->shipping_address['city'] ?? '' }}, {{ $o->shipping_address['state'] ?? '' }} {{ $o->shipping_address['postal'] ?? '' }}
+                            @if(!empty($o->shipping_address['contact']))
+                                <br>Contact: {{ $o->shipping_address['contact'] }}
+                            @elseif(!empty($o->shipping_address['country']))
+                                <br>{{ $o->shipping_address['country'] }}
+                            @endif
                         </p>
                     @else
                         <p class="text-[12px] text-gray-500">No shipping address provided.</p>
@@ -189,8 +201,12 @@
                         <p class="text-[13px] font-medium text-gray-900">{{ $o->billing_address['name'] ?? '—' }}</p>
                         <p class="text-[12px] text-gray-600 mt-1 leading-relaxed">
                             {{ $o->billing_address['line1'] ?? '' }}<br>
-                            {{ $o->billing_address['city'] ?? '' }}, {{ $o->billing_address['state'] ?? '' }} {{ $o->billing_address['postal'] ?? '' }}<br>
-                            {{ $o->billing_address['country'] ?? '' }}
+                            {{ $o->billing_address['city'] ?? '' }}, {{ $o->billing_address['state'] ?? '' }} {{ $o->billing_address['postal'] ?? '' }}
+                            @if(!empty($o->billing_address['contact']))
+                                <br>Contact: {{ $o->billing_address['contact'] }}
+                            @elseif(!empty($o->billing_address['country']))
+                                <br>{{ $o->billing_address['country'] }}
+                            @endif
                         </p>
                     @else
                         <p class="text-[12px] text-gray-500">No billing address provided.</p>

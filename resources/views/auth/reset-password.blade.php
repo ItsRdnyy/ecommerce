@@ -47,9 +47,14 @@
 
             <div>
                 <label for="password" class="block text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-700 mb-2">New Password</label>
-                <input type="password" id="password" name="password" required
-                       class="w-full bg-white border border-[#ddd8d0] px-4 py-3 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#111] transition-colors"
-                       placeholder="Enter your new password">
+                <div class="relative">
+                    <input type="password" id="password" name="password" required
+                           class="w-full bg-white border border-[#ddd8d0] pl-4 pr-12 py-3 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#111] transition-colors"
+                           placeholder="Enter your new password">
+                    <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wider text-gray-500 uppercase hover:text-black focus:outline-none select-none">
+                        Show
+                    </button>
+                </div>
                 @error('password')
                     <p class="mt-2 text-[12px] text-red-600">{{ $message }}</p>
                 @enderror
@@ -57,9 +62,14 @@
 
             <div>
                 <label for="password_confirmation" class="block text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-700 mb-2">Confirm Password</label>
-                <input type="password" id="password_confirmation" name="password_confirmation" required
-                       class="w-full bg-white border border-[#ddd8d0] px-4 py-3 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#111] transition-colors"
-                       placeholder="Confirm your new password">
+                <div class="relative">
+                    <input type="password" id="password_confirmation" name="password_confirmation" required
+                           class="w-full bg-white border border-[#ddd8d0] pl-4 pr-12 py-3 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#111] transition-colors"
+                           placeholder="Confirm your new password">
+                    <button type="button" onclick="togglePasswordVisibility('password_confirmation', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wider text-gray-500 uppercase hover:text-black focus:outline-none select-none">
+                        Show
+                    </button>
+                </div>
             </div>
 
             <button type="submit"
@@ -75,5 +85,17 @@
         </p>
     </div>
 
+    <script>
+        function togglePasswordVisibility(fieldId, button) {
+            const field = document.getElementById(fieldId);
+            if (field.type === 'password') {
+                field.type = 'text';
+                button.textContent = 'Hide';
+            } else {
+                field.type = 'password';
+                button.textContent = 'Show';
+            }
+        }
+    </script>
 </body>
 </html>
