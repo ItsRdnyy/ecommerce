@@ -87,7 +87,7 @@
             </div>
             <div>
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Stock</label>
-                <input type="number" name="stock" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
+                <input type="number" name="stock" id="create_stock" min="0" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
             </div>
             <div id="create_sizes_container" class="hidden">
                 <label class="block text-[12px] font-semibold tracking-[0.1em] uppercase text-gray-500 mb-1.5">Available Sizes (Comma Separated)</label>

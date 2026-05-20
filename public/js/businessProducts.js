@@ -44,16 +44,37 @@ function toggleSizesField(selectEl, containerId) {
         if (input) input.placeholder = 'e.g. 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48';
     } else {
         container.classList.add('hidden');
-        if (input) input.value = '';
+        if (input) {
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+        }
     }
 }
 
-function generateSizeStockInputs(sizesInputId, stockContainerId, stockInputsId) {
+function generateSizeStockInputs(sizesInputId, stockContainerId, stockInputsId, mainStockInputId) {
     const sizesInput = document.getElementById(sizesInputId);
     const stockContainer = document.getElementById(stockContainerId);
     const stockInputs = document.getElementById(stockInputsId);
+    const mainStockInput = document.getElementById(mainStockInputId);
 
     if (!sizesInput || !stockContainer || !stockInputs) return;
+
+    function updateTotalStock() {
+        if (!mainStockInput) return;
+        let total = 0;
+        const inputs = stockInputs.querySelectorAll('.size-stock-input');
+        if (inputs.length > 0) {
+            inputs.forEach(input => {
+                total += parseInt(input.value) || 0;
+            });
+            mainStockInput.value = total;
+            mainStockInput.readOnly = true;
+            mainStockInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+        } else {
+            mainStockInput.readOnly = false;
+            mainStockInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+        }
+    }
 
     sizesInput.addEventListener('input', function() {
         const sizes = this.value.split(',').map(s => s.trim()).filter(s => s);
@@ -67,14 +88,21 @@ function generateSizeStockInputs(sizesInputId, stockContainerId, stockInputsId) 
                 div.className = 'grid grid-cols-3 gap-2 items-center';
                 div.innerHTML = `
                     <label class="text-[12px] text-gray-600 font-semibold">${size}:</label>
-                    <input type="number" name="sizes_stock[${size}]" min="0" value="0" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400" placeholder="Stock">
+                    <input type="number" name="sizes_stock[${size}]" min="0" value="0" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400 size-stock-input" placeholder="Stock">
                     <input type="number" name="sizes_price[${size}]" step="0.01" min="0" class="border border-[#e8e5e0] rounded px-3 py-2 text-[14px] focus:outline-none focus:border-gray-400" placeholder="Price (Optional)">
                 `;
                 stockInputs.appendChild(div);
             });
+
+            const newInputs = stockInputs.querySelectorAll('.size-stock-input');
+            newInputs.forEach(input => {
+                input.addEventListener('input', updateTotalStock);
+            });
+            updateTotalStock();
         } else {
             stockContainer.classList.add('hidden');
             stockInputs.innerHTML = '';
+            updateTotalStock();
         }
     });
 }
@@ -96,10 +124,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Initialize size stock inputs for create form
-    generateSizeStockInputs('create_sizes', 'create_sizes_stock_container', 'create_sizes_stock_inputs');
+    generateSizeStockInputs('create_sizes', 'create_sizes_stock_container', 'create_sizes_stock_inputs', 'create_stock');
 
     // Initialize size stock inputs for edit form
-    generateSizeStockInputs('edit_sizes', 'edit_sizes_stock_container', 'edit_sizes_stock_inputs');
+    generateSizeStockInputs('edit_sizes', 'edit_sizes_stock_container', 'edit_sizes_stock_inputs', 'edit_stock');
 });
 
 function openEditModal(productId) {
@@ -160,6 +188,7 @@ function openEditModal(productId) {
                                 const stockInput = document.querySelector(`input[name="sizes_stock[${size}]"]`);
                                 if (stockInput) {
                                     stockInput.value = variant.stock || 0;
+                                    stockInput.dispatchEvent(new Event('input'));
                                 }
                                 const priceInput = document.querySelector(`input[name="sizes_price[${size}]"]`);
                                 if (priceInput) {
