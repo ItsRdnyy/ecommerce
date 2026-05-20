@@ -34,7 +34,17 @@
                         <div class="flex-1">
                             <h3 class="text-[16px] font-semibold text-gray-900 mb-2">{{ $item->product->name }}</h3>
                             <p class="text-[14px] text-gray-600 mb-1">{{ $item->product->category->name ?? 'Uncategorized' }}</p>
-                            @if($item->size)
+                            @if($item->product->variants->isNotEmpty() && $item->product->variants->pluck('attributes.size')->filter()->isNotEmpty())
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-[13px] font-medium text-gray-700">Size:</span>
+                                <select class="size-select bg-[#f5f3ef] hover:bg-[#e8e5e0] border border-[#e8e5e0] rounded-lg px-3 py-1.5 text-[13px] font-medium text-gray-800 focus:outline-none transition-colors cursor-pointer" 
+                                        data-item-id="{{ $item->id }}">
+                                    @foreach($item->product->variants->pluck('attributes.size')->filter()->unique() as $sz)
+                                        <option value="{{ $sz }}" {{ $item->size === $sz ? 'selected' : '' }}>{{ $sz }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @elseif($item->size)
                             <p class="text-[13px] text-gray-700 mb-1"><span class="font-medium">Size:</span> {{ $item->size }}</p>
                             @endif
                             <p class="text-[12px] uppercase tracking-[0.12em] text-gray-500 mb-3">{{ $item->type === 'wholesale' ? 'Wholesale purchase' : 'Retail purchase' }}</p>
@@ -187,6 +197,14 @@
             });
         });
 
+        document.querySelectorAll('.size-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const itemId = this.dataset.itemId;
+                const newSize = this.value;
+                updateCartItemSize(itemId, newSize);
+            });
+        });
+
         document.querySelectorAll('.remove-item').forEach(button => {
             button.addEventListener('click', function() {
                 const itemId = this.dataset.itemId;
@@ -274,6 +292,69 @@
         
         const totalEl = document.getElementById('summary-total');
         if (totalEl) totalEl.textContent = '₱' + summary.total;
+    }
+
+    async function updateCartItemSize(itemId, size) {
+        try {
+            const response = await fetch(`/cart/items/${itemId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ size: size })
+            });
+            const data = await response.json();
+            if (data.success) {
+                if (data.merged) {
+                    location.reload();
+                } else {
+                    updateCartCountDisplay(data.cart_count);
+                    
+                    // Update net total and net unit price
+                    const itemTotal = document.querySelector(`.item-total[data-item-id="${itemId}"]`);
+                    if (itemTotal) itemTotal.textContent = '₱' + data.item_total;
+                    
+                    const itemUnit = document.querySelector(`.item-unit-price[data-item-id="${itemId}"]`);
+                    if (itemUnit && data.item_unit_price) itemUnit.textContent = '₱' + data.item_unit_price;
+                    
+                    // Update original prices and savings
+                    const origTotal = document.querySelector(`.item-original-total[data-item-id="${itemId}"]`);
+                    const savings = document.querySelector(`.item-savings[data-item-id="${itemId}"]`);
+                    const origUnit = document.querySelector(`.item-original-unit-price[data-item-id="${itemId}"]`);
+                    
+                    if (data.has_discount) {
+                        if (origTotal) {
+                            origTotal.textContent = '₱' + data.original_total;
+                            origTotal.classList.remove('hidden');
+                        }
+                        if (savings) {
+                            savings.textContent = 'Saved ₱' + data.discount_amount;
+                            savings.classList.remove('hidden');
+                        }
+                        if (origUnit) {
+                            origUnit.textContent = '₱' + data.original_unit_price + ' each';
+                            origUnit.classList.remove('hidden');
+                        }
+                    } else {
+                        if (origTotal) origTotal.classList.add('hidden');
+                        if (savings) savings.classList.add('hidden');
+                        if (origUnit) origUnit.classList.add('hidden');
+                    }
+                    
+                    updateSummary(data.summary);
+                    window.Layout.showNotification(data.message, 'success');
+                }
+            } else {
+                window.Layout.showNotification(data.message, 'error');
+                // Revert size drop down to previous setting by reloading
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Error updating size:', error);
+        }
     }
 
     async function updateQuantity(itemId, quantity) {

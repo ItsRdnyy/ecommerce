@@ -15,7 +15,7 @@ class CartController extends Controller
     public function index()
     {
         $cart = $this->getOrCreateCart();
-        $cart->load('items.product.category');
+        $cart->load('items.product.category', 'items.product.variants');
         $cart->recalculate();
 
         return view('cart.index', compact('cart'));
@@ -114,12 +114,16 @@ class CartController extends Controller
 
     public function update(Request $request, CartItem $item)
     {
-        $request->validate(['quantity' => 'required|integer|min:1|max:99']);
+        $request->validate([
+            'quantity' => 'nullable|integer|min:1|max:99',
+            'size' => 'nullable|string|max:10'
+        ]);
 
         $product = $item->product;
         $product->load('variants');
-        $quantity = (int) $request->quantity;
-        $size = $item->size;
+        
+        $quantity = $request->has('quantity') ? (int) $request->quantity : $item->quantity;
+        $size = $request->has('size') ? $request->size : $item->size;
 
         // Check stock based on size
         if ($size) {
@@ -138,8 +142,64 @@ class CartController extends Controller
             }
         }
 
+        // Check if size has changed and we need to merge with an existing cart item of same size
+        if ($request->has('size') && $size !== $item->size) {
+            $existing = CartItem::where('cart_id', $item->cart_id)
+                ->where('product_id', $item->product_id)
+                ->where('id', '!=', $item->id)
+                ->where('size', $size)
+                ->first();
+
+            if ($existing) {
+                $totalQty = $existing->quantity + $quantity;
+
+                // Validate stock for combined quantity
+                if ($size) {
+                    $variant = $product->variants->first(fn($v) => data_get($v->attributes, 'size') == $size);
+                    if ($variant && $variant->stock < $totalQty) {
+                        return $this->jsonOrRedirect($request, 'Oops! Combined quantity exceeds stock in this size.', false, 400);
+                    }
+                } else {
+                    if ($product->stock < $totalQty) {
+                        return $this->jsonOrRedirect($request, 'Oops! Combined quantity exceeds stock.', false, 400);
+                    }
+                }
+
+                $itemType = $this->resolveCartItemType($product, $totalQty);
+                $existing->update(array_merge(
+                    $this->cartItemPayload($product, $totalQty, $itemType, $size),
+                    ['size' => $size]
+                ));
+
+                $cart = $item->cart;
+                $item->delete();
+                $cart->recalculate();
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Cart updated and items merged.',
+                        'merged' => true,
+                        'cart_count' => $cart->items->sum('quantity'),
+                        'summary' => [
+                            'subtotal' => number_format($cart->total + $cart->discount_total, 2),
+                            'discount_total' => number_format($cart->discount_total, 2),
+                            'shipping_total' => number_format($cart->shipping_total, 2),
+                            'total' => number_format($cart->total + $cart->shipping_total, 2),
+                            'has_discounts' => $cart->discount_total > 0
+                        ]
+                    ]);
+                }
+
+                return back()->with('success', 'Cart updated and merged.');
+            }
+        }
+
         $itemType = $this->resolveCartItemType($product, $quantity);
-        $item->update($this->cartItemPayload($product, $quantity, $itemType, $size));
+        $item->update(array_merge(
+            $this->cartItemPayload($product, $quantity, $itemType, $size),
+            ['size' => $size]
+        ));
 
         $item->cart->recalculate();
 
