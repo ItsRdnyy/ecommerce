@@ -23,7 +23,7 @@ class NotificationController extends Controller
         }
 
         $notification->markAsRead();
-        return response()->json(['success' => true]);
+        return redirect()->back();
     }
 
     public function markAllAsRead()
@@ -32,7 +32,7 @@ class NotificationController extends Controller
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
-        return response()->json(['success' => true]);
+        return redirect()->back();
     }
 
     public function unreadCount()

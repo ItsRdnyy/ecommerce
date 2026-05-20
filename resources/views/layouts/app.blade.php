@@ -20,7 +20,7 @@
         }
     </style>
 </head>
-<body class="font-sans-body text-gray-900 antialiased" data-is-authenticated="{{ auth()->check() ? 'true' : 'false' }}" data-cart-count-url="{{ route('cart.count') }}" data-cart-add-url="{{ route('cart.add') }}">
+<body class="font-sans-body text-gray-900 antialiased" data-is-authenticated="{{ auth()->check() ? 'true' : 'false' }}" data-cart-count-url="{{ route('cart.count') }}" data-cart-add-url="{{ route('cart.add') }}" data-notif-count-url="{{ route('notifications.count') }}">
 
     <!-- Navigation -->
     <nav class="bg-[#f5f3ef] border-b border-[#e8e5e0] relative z-50">

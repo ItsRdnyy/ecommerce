@@ -17,12 +17,14 @@
         appState = {
             isAuthenticated: body.dataset.isAuthenticated === 'true',
             cartCountUrl: body.dataset.cartCountUrl,
-            cartAddUrl: body.dataset.cartAddUrl
+            cartAddUrl: body.dataset.cartAddUrl,
+            notifCountUrl: body.dataset.notifCountUrl
         };
 
-        // Update cart count on page load if authenticated
+        // Update cart and notification counts on page load if authenticated
         if (appState.isAuthenticated) {
             updateCartCount();
+            updateNotificationCount();
         }
 
         // Setup add to cart buttons
@@ -98,6 +100,28 @@
             }
         } catch (error) {
             console.error('Error updating cart count:', error);
+        }
+    }
+
+    /**
+     * Update notification count badge
+     */
+    async function updateNotificationCount() {
+        try {
+            const response = await fetch(appState.notifCountUrl);
+            const data = await response.json();
+
+            const notifCountEl = document.getElementById('notif-count');
+            if (notifCountEl) {
+                if (data.count > 0) {
+                    notifCountEl.textContent = data.count;
+                    notifCountEl.classList.remove('hidden');
+                } else {
+                    notifCountEl.classList.add('hidden');
+                }
+            }
+        } catch (error) {
+            console.error('Error updating notification count:', error);
         }
     }
 
@@ -235,6 +259,7 @@
     // Expose functions globally for external use
     window.Layout = {
         updateCartCount,
+        updateNotificationCount,
         showNotification
     };
 

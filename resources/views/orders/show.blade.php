@@ -9,17 +9,7 @@
         <h1 class="font-serif-display text-[32px] text-gray-900 mb-2">Order #{{ $order->id }}</h1>
         <p class="text-[12px] text-gray-600 mb-8">Placed on {{ $order->created_at->format('F d, Y') }}</p>
 
-        @if(session('success'))
-        <div class="mb-6 bg-green-50 border border-green-200 text-green-800 text-[13px] px-4 py-3 font-medium">
-            {{ session('success') }}
-        </div>
-        @endif
-
-        @if(session('error'))
-        <div class="mb-6 bg-red-50 border border-red-200 text-red-800 text-[13px] px-4 py-3 font-medium">
-            {{ session('error') }}
-        </div>
-        @endif
+        
 
         <div class="bg-white border border-[#e8e5e0] p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
