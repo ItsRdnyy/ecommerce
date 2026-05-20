@@ -105,7 +105,7 @@
                             @foreach($shopProducts as $product)
                                 @php
                                     $categoryName = strtolower($product->category->name ?? '');
-                                    $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                                    $isApparel = str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
                                     $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
                                     $showSizes = $isApparel || $isShoe;
                                     $variantsStock = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;

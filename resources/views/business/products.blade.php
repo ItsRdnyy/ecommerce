@@ -44,7 +44,7 @@
                     <option value="" disabled selected>Select Category</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}"
-                                data-is-apparel="{{ str_contains(strtolower($category->name), 'clothing') || str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
+                                data-is-apparel="{{ str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
                                 data-is-shoe="{{ str_contains(strtolower($category->name), 'shoe') || str_contains(strtolower($category->name), 'footwear') || str_contains(strtolower($category->name), 'sneaker') || str_contains(strtolower($category->name), 'boot') ? 'true' : 'false' }}">
                             {{ $category->name }}
                         </option>
@@ -115,7 +115,7 @@
                         <option value="">All Categories</option>
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}"
-                                    data-is-clothing="{{ str_contains(strtolower($category->name), 'clothing') || str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') ? 'true' : 'false' }}"
+                                    data-is-apparel="{{ str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
                                     {{ request('category') == $category->id ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
@@ -221,7 +221,7 @@
                         <!-- Sizes (Apparel & Shoes) -->
                         @php
                             $categoryName = strtolower($product->category->name ?? '');
-                            $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+                            $isApparel = str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
                             $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
                             $showSizes = $isApparel || $isShoe;
                             if ($isShoe) {
@@ -321,7 +321,7 @@
                         <select id="edit_category_id" name="category_id" required class="w-full border border-[#e8e5e0] rounded px-4 py-2.5 text-[14px] focus:outline-none focus:border-gray-400">
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}"
-                                        data-is-apparel="{{ str_contains(strtolower($category->name), 'clothing') || str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
+                                        data-is-apparel="{{ str_contains(strtolower($category->name), 'shirt') || str_contains(strtolower($category->name), 'pants') || str_contains(strtolower($category->name), 'dress') || str_contains(strtolower($category->name), 'apparel') ? 'true' : 'false' }}"
                                         data-is-shoe="{{ str_contains(strtolower($category->name), 'shoe') || str_contains(strtolower($category->name), 'footwear') || str_contains(strtolower($category->name), 'sneaker') || str_contains(strtolower($category->name), 'boot') ? 'true' : 'false' }}">
                                     {{ $category->name }}
                                 </option>

@@ -22,10 +22,10 @@
                         Clothing that fits your life.
                     </p>
                     <div class="flex flex-wrap gap-4">
-                        <a href="{{ route('products') }}" class="btn-primary">
+                        <a href="{{ route('products', ['gender' => 'men']) }}" class="btn-primary">
                             Shop Men
                         </a>
-                        <a href="{{ route('products') }}" class="btn-secondary">
+                        <a href="{{ route('products', ['gender' => 'women']) }}" class="btn-secondary">
                             Shop Women
                         </a>
                     </div>
@@ -124,7 +124,7 @@
                             <!-- Status Badge -->
                             @php
                                 $catName = strtolower($product->category->name ?? '');
-                                $isApparelLP = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
+                                $isApparelLP = str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
                                 $isShoeLP = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
                                 $showSizesLP = $isApparelLP || $isShoeLP;
                                 $variantsStockLP = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;

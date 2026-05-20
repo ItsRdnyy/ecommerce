@@ -295,7 +295,7 @@
         // Build size chips if product has sizes
         const catName = (product.category_name || '').toLowerCase();
         const isShoe = ['shoe', 'footwear', 'sneaker', 'boot'].some(k => catName.includes(k));
-        const isApparel = ['clothing', 'shirt', 'pants', 'dress', 'apparel'].some(k => catName.includes(k));
+        const isApparel = ['shirt', 'pants', 'dress', 'apparel'].some(k => catName.includes(k));
         let sizesHtml = '';
         if (isShoe || isApparel) {
             let sizeList = [];

@@ -43,7 +43,7 @@ class ProductController extends Controller
             return response()->json([
                 'products' => $products->map(function ($product) {
                     $catName = strtolower($product->category->name ?? '');
-                    $isApparelOrShoe = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel') || str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
+                    $isApparelOrShoe = str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel') || str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
                     $variantsStock = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;
                     $totalStock = $isApparelOrShoe && $product->variants->count() > 0 ? $variantsStock : $product->stock;
                     return [

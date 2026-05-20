@@ -6,7 +6,7 @@
 @php
     $isAuthenticated = auth()->check();
     $categoryName = strtolower($product->category->name ?? '');
-    $isApparel = str_contains($categoryName, 'clothing') || str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
+    $isApparel = str_contains($categoryName, 'shirt') || str_contains($categoryName, 'pants') || str_contains($categoryName, 'dress') || str_contains($categoryName, 'apparel');
     $isShoe = str_contains($categoryName, 'shoe') || str_contains($categoryName, 'footwear') || str_contains($categoryName, 'sneaker') || str_contains($categoryName, 'boot');
     $showSizes = $isApparel || $isShoe;
     $totalStock = $showSizes ? $product->variants->sum('stock') : $product->stock;
@@ -139,7 +139,7 @@
                             @php
                                 if (!isset($totalStock)) {
                                     $catName = strtolower($product->category->name ?? '');
-                                    $isApparelDetail = str_contains($catName, 'clothing') || str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
+                                    $isApparelDetail = str_contains($catName, 'shirt') || str_contains($catName, 'pants') || str_contains($catName, 'dress') || str_contains($catName, 'apparel');
                                     $isShoeDetail = str_contains($catName, 'shoe') || str_contains($catName, 'footwear') || str_contains($catName, 'sneaker') || str_contains($catName, 'boot');
                                     $showSizesDetail = $isApparelDetail || $isShoeDetail;
                                     $variantsStockDetail = $product->variants->count() > 0 ? $product->variants->sum('stock') : 0;
