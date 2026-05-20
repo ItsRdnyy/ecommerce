@@ -31,6 +31,7 @@
             loginUrl: productsContainer.dataset.loginUrl,
             productsUrl: productsContainer.dataset.productsUrl,
             cartAddUrl: productsContainer.dataset.cartAddUrl,
+            buyNowUrl: productsContainer.dataset.buyNowUrl,
             checkoutUrl: productsContainer.dataset.checkoutUrl
         };
 
@@ -660,7 +661,7 @@
             const payload = { product_id: productId, quantity: qty };
             if (selectedSize) payload.size = selectedSize;
 
-            const response = await fetch(appState.cartAddUrl, {
+            const response = await fetch(appState.buyNowUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

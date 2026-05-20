@@ -49,6 +49,7 @@ Route::post('/logout', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/buy-now', [CartController::class, 'buyNow'])->name('cart.buyNow');
     Route::patch('/cart/items/{item}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/items/{item}', [CartController::class, 'remove'])->name('cart.remove');
     Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
